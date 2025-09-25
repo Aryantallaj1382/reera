@@ -1,0 +1,213 @@
+<?php
+
+namespace App\Http\Controllers\Api\ads\PersonalAds;
+
+use App\Http\Controllers\Controller;
+use App\Models\Ad;
+use App\Models\AdAddress;
+use App\Models\AdImage;
+use App\Models\Category\Category;
+use App\Models\Currency;
+use App\Models\Digital\DigitalAd;
+use App\Models\PersonalAd;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+
+class PersonalAdController extends Controller
+{
+
+    public function index(Request $request)
+    {
+        $categories = Category::with('children.children')->whereNull('parent_id')->get();
+
+        $result = $categories->map(function ($category) {
+            $format = function ($cat) use (&$format) {
+                return [
+                    'id' => $cat->id,
+                    'title' => $cat->title,
+                    'slug' => $cat->slug,
+                    'children' => $cat->children->map(function ($child) use (&$format) {
+                        return $format($child);
+                    }),
+                ];
+            };
+
+            return $format($category);
+        });
+
+        $c = Currency::select('id', 'title', 'code')->get();
+
+        return api_response(
+            [
+                'categories' => $result,
+                'currency' => $c,
+            ]
+        );
+    }
+    public function first(Request $request)
+    {
+        $request->validate([
+            'category_id' => 'required|integer|exists:categories,id',
+            'title' => 'required|string|max:255',
+            'personal_ads_type_id' => 'required|max:255',
+            'gender' => 'required',
+        ]);
+
+        $ad = Ad::create([
+            'user_id' => 1,
+            'category_id' => $request->category_id,
+            'title' => $request->title,
+        ]);
+        PersonalAd::create([
+            'ad_id' => $ad->id,
+            'personal_ads_type_id' => $request->personal_ads_type_id,
+            'gender' => $request->gender,
+        ]);
+
+        return api_response($ad->id, __('messages.saved_successfully'));
+
+    }
+    public function second(Request $request)
+    {
+        $request->validate([
+            'ad_id' => 'required|integer|exists:ads,id',
+            'country_id' => 'required|integer|exists:countries,id',
+            'city_id' => 'required|integer|exists:cities,id',
+            'region' => 'required|string|max:255',
+            'full_address' => 'required|string|max:255',
+            'longitude' => 'required|string|max:255',
+            'latitude' => 'required|string|max:255',
+        ]);
+        $ad = Ad::find($request->ad_id);
+        AdAddress::create([
+            'ad_id' => $ad->id,
+            'country_id' => $request->country_id,
+            'city_id' => $request->city_id,
+            'region' => $request->region,
+            'full_address' => $request->full_address,
+            'longitude' => $request->longitude,
+            'latitude' => $request->latitude,
+        ]);
+        return api_response([], __('messages.saved_successfully'));
+
+    }
+    public function third(Request $request)
+    {
+        $request->validate([
+            'ad_id' => 'required|integer|exists:ads,id',
+            'condition' => 'nullable',
+            'text' => 'nullable',
+
+        ]);
+
+        $ad = Ad::find($request->ad_id);
+        $ad->personalAd()->update([
+            'condition' => $request->condition,
+            'text' => $request->text,
+
+        ]);
+        return api_response([], __('messages.saved_successfully'));
+
+    }
+    public function fourth(Request $request)
+    {
+        $data = $request->validate([
+            'ad_id' => 'required|exists:ads,id',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ], [], [
+            'ad_id' => 'آگهی',
+            'images' => 'عکس‌ها',
+            'image' => 'عکس اصلی',
+        ]);
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $imageFile) {
+                $path = $imageFile->store('ad_images', 'public');
+                AdImage::create([
+                    'ad_id' => $data['ad_id'],
+                    'image_path' => $path,
+                    'is_main' => false,
+                ]);
+            }
+        }
+
+        if ($request->hasFile('image')) {
+            $mainImage = $request->file('image');
+            $mainPath = $mainImage->store('ad_images', 'public');
+            AdImage::create([
+                'ad_id' => $data['ad_id'],
+                'image_path' => $mainPath,
+                'is_main' => true,
+            ]);
+        }
+
+        return api_response([], __('messages.saved_successfully'));
+    }
+    public function fifth(Request $request)
+    {
+        $request->validate([
+            'ad_id' => 'required|integer|exists:ads,id',
+            'site_massage' => 'nullable',
+            'my_phone' => 'nullable',
+            'other_phone' => 'nullable',
+            'other_phone_number' => 'nullable',
+        ]);
+
+        $ad = Ad::find($request->ad_id);
+        $ad->personalAd()->update([
+            'site_massage' => $request->site_massage,
+            'my_phone' => $request->my_phone,
+            'other_phone' => $request->other_phone,
+            'other_phone_number' => $request->other_phone_number,
+        ]);
+
+        return api_response([], __('messages.saved_successfully'));
+    }
+    public function sixth(Request $request)
+    {
+        $request->validate([
+            'ad_id' => 'required|integer|exists:ads,id',
+            'currencies_id' =>'required',
+            'price' => 'required|numeric|min:0',
+            'deposit' => 'required|numeric|min:0',
+            'cash' => 'nullable',
+            'installments' => 'nullable',
+            'check' => 'nullable',
+
+        ]);
+
+        $ad = Ad::find($request->ad_id);
+        $ad->personalAd()->update([
+            'currencies_id' => $request->currencies_id,
+            'price' => $request->price,
+            'deposit' => $request->deposit,
+            'cash' => $request->cash,
+            'installments' => $request->installments,
+            'check' => $request->check,
+
+        ]);
+        return api_response([], __('messages.saved_successfully'));
+
+    }
+    public function delete($id)
+    {
+        $ad = Ad::find($id);
+
+        if (!$ad) {
+            return api_response([], __('messages.not_found'), 404);
+        }
+
+        foreach ($ad->images as $image) {
+            if (Storage::disk('public')->exists($image->image_path)) {
+                Storage::disk('public')->delete($image->image_path);
+            }
+            $image->delete();
+        }
+        $ad->delete();
+
+        return api_response([], __('messages.deleted_successfully'));
+    }
+
+}
