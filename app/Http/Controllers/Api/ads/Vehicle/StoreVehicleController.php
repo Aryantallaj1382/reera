@@ -6,12 +6,33 @@ use App\Http\Controllers\Controller;
 use App\Models\Ad;
 use App\Models\AdAddress;
 use App\Models\AdImage;
+use App\Models\Currency;
 use App\Models\Vehicle\Vehicle;
+use App\Models\Vehicle\VehicleBrand;
+use App\Models\Vehicle\VehicleModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class StoreVehicleController extends Controller
 {
+    public function index(Request $request)
+    {
+
+        $c = Currency::select(['id', 'title', 'code'])->get();
+
+        $brand = VehicleBrand::all();
+        $q= $request->get('brand');
+        $model = VehicleModel::where('brand_id', $q)->get();
+
+        return api_response(
+            [
+                'currency' => $c,
+                'brands' => $brand,
+                'models' => $model,
+            ]
+        );
+    }
+
 
     public function first(Request $request)
     {

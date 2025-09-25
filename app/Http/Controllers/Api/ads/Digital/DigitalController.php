@@ -139,6 +139,7 @@ class DigitalController extends Controller
             'max_price' => $maxPrice,
             'loc' =>$a
         ]);
+
     }
 
     private function applyFilters(Request $request, Builder $query)

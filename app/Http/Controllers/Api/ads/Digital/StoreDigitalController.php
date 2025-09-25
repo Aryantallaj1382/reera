@@ -129,33 +129,23 @@ class StoreDigitalController extends Controller
     {
         $data = $request->validate([
             'ad_id' => 'required|exists:ads,id',
-            'images' => 'nullable|array',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'images' => 'required|array',
+            'images.*.image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'images.*.is_main' => 'required|boolean',
         ], [], [
             'ad_id' => 'آگهی',
             'images' => 'عکس‌ها',
-            'image' => 'عکس اصلی',
+            'images.*.image' => 'عکس',
+            'images.*.is_main' => 'اصلی بودن',
         ]);
 
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $imageFile) {
-                $path = $imageFile->store('ad_images', 'public');
-                AdImage::create([
-                    'ad_id' => $data['ad_id'],
-                    'image_path' => $path,
-                    'is_main' => false,
-                ]);
-            }
-        }
+        foreach ($request->images as $img) {
+            $path = $img['image']->store('ad_images', 'public');
 
-        if ($request->hasFile('image')) {
-            $mainImage = $request->file('image');
-            $mainPath = $mainImage->store('ad_images', 'public');
             AdImage::create([
                 'ad_id' => $data['ad_id'],
-                'image_path' => $mainPath,
-                'is_main' => true,
+                'image_path' => $path,
+                'is_main' => $img['is_main'],
             ]);
         }
 
