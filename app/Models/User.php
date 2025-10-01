@@ -112,4 +112,58 @@ class User extends Authenticatable
         return $this->hasMany(UserAttribute::class);
     }
 
+
+    public function adComments()
+    {
+        return $this->hasManyThrough(
+            Comment::class,  // مدل مقصد
+            Ad::class,       // مدل میانی
+            'user_id',       // کلید در جدول ads (user_id)
+            'commentable_id',// کلید در جدول comments
+            'id',            // کلید در جدول users
+            'id'             // کلید در جدول ads
+        )->where('commentable_type', Ad::class);
+    }
+    public function getAverageOwnerBehaviorRatingAttribute()
+    {
+        return round($this->adComments()->avg('owner_behavior_rating'), 1);
+    }
+
+    public function getAveragePriceClarityRatingAttribute()
+    {
+        return round($this->adComments()->avg('price_clarity_rating'), 1);
+    }
+
+    public function getAverageInfoHonestyRatingAttribute()
+    {
+        return round($this->adComments()->avg('info_honesty_rating'), 1);
+    }
+
+    public function getAverageCleanlinessRatingAttribute()
+    {
+        return round($this->adComments()->avg('cleanliness_rating'), 1);
+    }
+    public function getRatingsSummaryAttribute()
+    {
+        $comments = $this->adComments();
+
+        // محاسبه میانگین هر فیلد
+        $owner_behavior = round($comments->avg('owner_behavior_rating'), 1);
+        $price_clarity  = round($comments->avg('price_clarity_rating'), 1);
+        $info_honesty   = round($comments->avg('info_honesty_rating'), 1);
+        $cleanliness    = round($comments->avg('cleanliness_rating'), 1);
+
+        // محاسبه میانگین کلی (از ۴ فیلد)
+        $allRatings = array_filter([$owner_behavior, $price_clarity, $info_honesty, $cleanliness]);
+        $overall = !empty($allRatings) ? round(array_sum($allRatings) / count($allRatings), 1) : null;
+
+        return $overall;
+    }
+    public function likedAds()
+    {
+        return $this->morphedByMany(Ad::class, 'likeable', 'likes')
+            ->withTimestamps();
+    }
+
+
 }

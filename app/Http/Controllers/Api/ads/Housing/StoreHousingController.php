@@ -52,12 +52,16 @@ class StoreHousingController extends Controller
             'year' => 'required|string|max:255',
             'number_of_bedrooms' => 'required',
             'number_of_bathroom' => 'required',
+            'type' => 'required',
+
         ]);
 
         $ad = Ad::create([
             'user_id' => 1,
             'category_id' => $request->category_id,
             'title' => $request->title,
+            'type' => $request->type,
+
         ]);
         HousingAds::create([
             'ad_id' => $ad->id,

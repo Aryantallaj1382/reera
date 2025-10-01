@@ -6,26 +6,49 @@ use App\Http\Controllers\Controller;
 use App\Models\Ad;
 use App\Models\AdAddress;
 use App\Models\AdImage;
+use App\Models\Category\Category;
+use App\Models\Currency;
 use App\Models\Kitchen\KitchenAd;
+use App\Models\PersonalAdType;
+use App\Models\ServiceExpertise;
+use App\Models\ServicesAd;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class ServicesController extends Controller
 {
+    public function index(Request $request)
+    {
+
+        $a = ServiceExpertise::all();
+
+        $c = Currency::select('id', 'title', 'code')->get();
+
+        return api_response(
+            [
+                'currency' => $c,
+                'type' => $a
+            ]
+        );
+    }
     public function first(Request $request)
     {
         $request->validate([
             'category_id' => 'required|integer|exists:categories,id',
             'title' => 'required',
             'service_expertise_id' => 'required',
+            'type' => 'required',
+
         ]);
 
         $ad = Ad::create([
             'user_id' => 1,
             'category_id' => $request->category_id,
             'title' => $request->title,
+            'type' => $request->type,
+
         ]);
-        KitchenAd::create([
+        ServicesAd::create([
             'ad_id' => $ad->id,
             'service_expertise_id' => $request->service_expertise_id,
 
@@ -86,39 +109,29 @@ class ServicesController extends Controller
     {
         $data = $request->validate([
             'ad_id' => 'required|exists:ads,id',
-            'images' => 'nullable|array',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'images' => 'required|array',
+            'images.*.image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'images.*.is_main' => 'required|boolean',
         ], [], [
             'ad_id' => 'آگهی',
             'images' => 'عکس‌ها',
-            'image' => 'عکس اصلی',
+            'images.*.image' => 'عکس',
+            'images.*.is_main' => 'اصلی بودن',
         ]);
 
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $imageFile) {
-                $path = $imageFile->store('ad_images', 'public');
-                AdImage::create([
-                    'ad_id' => $data['ad_id'],
-                    'image_path' => $path,
-                    'is_main' => false,
-                ]);
-            }
-        }
+        foreach ($request->images as $img) {
+            $path = $img['image']->store('ad_images', 'public');
 
-        if ($request->hasFile('image')) {
-            $mainImage = $request->file('image');
-            $mainPath = $mainImage->store('ad_images', 'public');
             AdImage::create([
                 'ad_id' => $data['ad_id'],
-                'image_path' => $mainPath,
-                'is_main' => true,
+                'image_path' => $path,
+                'is_main' => $img['is_main'],
             ]);
         }
 
         return api_response([], __('messages.saved_successfully'));
     }
-    public function fifth(Request $request)
+     public function fifth(Request $request)
     {
         $request->validate([
             'ad_id' => 'required|integer|exists:ads,id',

@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers\Api\Profile;
 
-use App\Http\Controllers\Controller;
 use App\Models\Ad;
 use App\Models\Category\Category;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 
-class MyAdsController extends Controller
+class DashboardController
 {
+
     public function index(Request $request)
     {
-        $ads = Ad::where('user_id', auth()->id())->where('type' , 'ad');
+        $ads = Ad::where('user_id', auth()->id());
+
         if ($request->has('category_id')) {
             $categoryId = $request->category_id;
             $category = Category::with('children')->find($categoryId);
@@ -26,8 +26,10 @@ class MyAdsController extends Controller
             }
         }
 
-        if ($request->filled('status')) {
-            $ads = $ads->where('status', $request->status);
+
+
+        if ($request->filled('type')) {
+            $ads = $ads->where('type', $request->type);
         }
 
         $ads = $ads->paginate(10);
@@ -41,28 +43,21 @@ class MyAdsController extends Controller
                 'status' => $item->status,
                 'price' => optional($item->housingAds)->price,
                 'time' => $item->time_ago,
-                'created_at' => $item?->remaining,
+                'created_at' => $item?->created_at,
                 'location' => $item->location,
                 'view' => $item->view,
                 'category' => optional($item->category)->title,
+                'model' => optional($item->category)->slug,
                 'category_id' => optional($item->category)->id,
+                'remaining' => $item?->remaining,
+
             ];
         });
 
         return api_response($ads);
     }
-    public function delete($id)
-    {
-        $user = auth()->user()->id;
-        $ad = Ad::where('user_id', $user)->find($id);
-        if (!$ad) {
-           return api_response(null, 'Ads not found');
-        }
-        $ad->delete();
-        return api_response([], 'Ads deleted');
 
-    }
-    public function extension($id)
+    public function sold($id)
     {
         $user = auth()->user()->id;
         $ad = Ad::where('user_id', $user)->find($id);
@@ -70,9 +65,9 @@ class MyAdsController extends Controller
             return api_response(null, 'Ads not found');
         }
         $ad->update([
-            'created_at' => Carbon::now()
+            'status' => 'sold'
         ]);
-        return api_response([], 'Ads update');
+        return api_response([], 'Ads sold');
 
     }
 }

@@ -49,4 +49,38 @@ class Comment extends Model
     {
         return $this->belongsTo(Comment::class, 'parent_id');
     }
+    public function getAverageRatingAttribute()
+    {
+        $ratings = [
+            $this->owner_behavior_rating,
+            $this->price_clarity_rating,
+            $this->info_honesty_rating,
+            $this->cleanliness_rating,
+        ];
+
+        // حذف مقادیر null
+        $filtered = array_filter($ratings, fn($value) => !is_null($value));
+
+        if (empty($filtered)) {
+            return null; // اگر هیچ مقداری ثبت نشده بود
+        }
+
+        return round(array_sum($filtered) / count($filtered), 1); // یک رقم اعشار
+    }
+
+    public function likes()
+    {
+        return $this->morphMany(Like::class, 'likeable');
+    }
+
+    public function getIsLikedAttribute()
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+
+        return $this->likes()->where('user_id', auth()->id())->exists();
+    }
+
+
 }

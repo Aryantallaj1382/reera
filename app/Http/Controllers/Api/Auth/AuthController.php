@@ -80,7 +80,9 @@ class AuthController extends Controller
                 'trace' => $e->getTraceAsString() // اگر بخوای کل استک ترِیس بیاد
             ], 500);
         }
-        return api_response($responseMessages, 'کد تایید برای شما ارسال شد');
+        return api_response(['e'=>$responseMessages,
+            'otp' => $code
+            ], 'کد تایید برای شما ارسال شد');
     }
 
     public function checkUserExists(Request $request)

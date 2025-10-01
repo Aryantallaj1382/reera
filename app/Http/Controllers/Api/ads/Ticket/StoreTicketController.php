@@ -1,44 +1,44 @@
 <?php
 
-namespace App\Http\Controllers\Api\ads\Kitchen;
+namespace App\Http\Controllers\Api\ads\Ticket;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ad;
 use App\Models\AdAddress;
 use App\Models\AdImage;
 use App\Models\Currency;
-use App\Models\Kitchen\KitchenAd;
-use App\Models\Kitchen\KitchenBrand;
-use App\Models\Kitchen\KitchenType;
+use App\Models\TicketAd;
+use App\Models\TicketType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
-class StoreKitchenController extends Controller
+class StoreTicketController extends Controller
 {
     public function index(Request $request)
     {
 
         $c = Currency::select(['id', 'title', 'code'])->get();
 
-        $brand = KitchenBrand::all();
-        $model = KitchenType::all();
+        $brand = TicketType::all();
+
 
         return api_response(
             [
                 'currency' => $c,
-                'brands' => $brand,
-                'models' => $model,
+                'type' => $brand,
             ]
         );
     }
+
 
     public function first(Request $request)
     {
         $request->validate([
             'category_id' => 'required|integer|exists:categories,id',
             'title' => 'required',
-            'kitchen_brand_id' => 'required',
-            'kitchen_type_id' => 'required',
+            'ticket_type_id' => 'required',
+            'number' => 'required',
+            'date' => 'required',
             'type' => 'required',
 
         ]);
@@ -50,11 +50,11 @@ class StoreKitchenController extends Controller
             'type' => $request->type,
 
         ]);
-        KitchenAd::create([
+        TicketAd::create([
             'ad_id' => $ad->id,
-            'kitchen_brand_id' => $request->kitchen_brand_id,
-            'kitchen_type_id' => $request->kitchen_type_id,
-
+            'ticket_type_id' => $request->ticket_type_id,
+            'number' => $request->number,
+            'date' => $request->date,
         ]);
 
         return api_response($ad->id, __('messages.saved_successfully'));
@@ -87,25 +87,22 @@ class StoreKitchenController extends Controller
         return api_response([], __('messages.saved_successfully'));
 
     }
+
     public function third(Request $request)
     {
         $request->validate([
             'ad_id' => 'required|integer|exists:ads,id',
-            'condition' => 'nullable',
             'text' => 'nullable',
 
         ]);
 
         $ad = Ad::find($request->ad_id);
-        $ad->kitchenAds()->update([
-            'condition' => $request->condition,
+        $ad->ticket()->update([
             'text' => $request->text,
-
         ]);
         return api_response([], __('messages.saved_successfully'));
 
     }
-
     public function fourth(Request $request)
     {
         $data = $request->validate([
@@ -140,11 +137,10 @@ class StoreKitchenController extends Controller
             'my_phone' => 'nullable',
             'other_phone' => 'nullable',
             'other_phone_number' => 'nullable',
-
         ]);
 
         $ad = Ad::find($request->ad_id);
-        $ad->kitchenAds()->update([
+        $ad->ticket()->update([
             'site_massage' => $request->site_massage,
             'my_phone' => $request->my_phone,
             'other_phone' => $request->other_phone,
@@ -167,7 +163,7 @@ class StoreKitchenController extends Controller
         ]);
 
         $ad = Ad::find($request->ad_id);
-        $ad->kitchenAds()->update([
+        $ad->ticket()->update([
             'currencies_id' => $request->currencies_id,
             'price' => $request->price,
             'donation' => $request->donation,
@@ -179,5 +175,23 @@ class StoreKitchenController extends Controller
 
     }
 
+    public function delete($id)
+    {
+        $ad = Ad::find($id);
+
+        if (!$ad) {
+            return api_response([], __('messages.not_found'), 404);
+        }
+
+        foreach ($ad->images as $image) {
+            if (Storage::disk('public')->exists($image->image_path)) {
+                Storage::disk('public')->delete($image->image_path);
+            }
+            $image->delete();
+        }
+        $ad->delete();
+
+        return api_response([], __('messages.deleted_successfully'));
+    }
 
 }

@@ -20,24 +20,76 @@ class Ad extends Model
 
 
     protected $fillable = [
-        'user_id', 'category_id', 'title', 'status',
+        'user_id', 'category_id', 'title', 'status', 'type' , 'created_at' , 'price'
     ];
     public function getCustomInfoAttribute()
     {
-        if ($this->category_id == 1 && $this->housingAds) {
+        if ($this->housingAds) {
             return [
                 'bedrooms' => $this->housingAds->number_of_bedrooms,
                 'area' => $this->housingAds->area,
-                'price' => $this->housingAds->price,
             ];
         }
-        if ($this->category_id == 2 && $this->digitalAd) {
+
+        if ($this->digitalAd) {
             return [
                 'condition' => $this->digitalAd->condition,
-                'price' => $this->digitalAd->price,
             ];
         }
-        return null;
+        if ($this->kitchenAds) {
+            return [
+
+            ];
+        }
+        if ($this->vehiclesAds) {
+            return [
+            ];
+        }
+        if ($this->recruitmentAd) {
+            return [
+                'type'
+
+            ];
+        }
+        if ($this->serviceAds) {
+            return [
+
+            ];
+        }
+        if ($this->housemate) {
+            return [
+
+            ];
+        }
+        if ($this->personalAd) {
+            return [
+
+            ];
+        }
+
+        return null; // بهتره null برگردونی نه 22 مگر اینکه 22 معنای خاصی داشته باشه
+    }
+
+    public function getRemainingAttribute()
+    {
+        if (!$this->created_at) {
+            return null;
+        }
+
+        $expireDate = $this->created_at->copy()->addDays(30);
+        $now = Carbon::now();
+
+        if ($now->greaterThan($expireDate)) {
+            return 'expired';
+        }
+
+        $daysLeft = round($now->floatDiffInDays($expireDate));
+
+        if ($daysLeft == 1) {
+            return 'today';
+        }
+
+        return $daysLeft ;
     }
 
     public function category()
@@ -63,7 +115,8 @@ class Ad extends Model
     {
         return $this->hasOne(AdImage::class)->where('is_main', true);
     }
-    public function getMainImageAttribute()
+
+    public function getImageAttribute()
     {
         $image = $this->mainImages()->first();
 
@@ -86,13 +139,21 @@ class Ad extends Model
     {
         return $this->hasOne(Vehicle::class);
     }
+    public function recruitmentAd()
+    {
+        return $this->hasOne(RecruitmentAd::class);
+    }
+    public function ticket()
+    {
+        return $this->hasOne(TicketAd::class);
+    }
     public function kitchenAds()
     {
         return $this->hasOne(KitchenAd::class);
     }
     public function serviceAds()
     {
-        return $this->hasOne(KitchenAd::class);
+        return $this->hasOne(ServicesAd::class);
     }
     public function housemate()
     {
@@ -103,6 +164,10 @@ class Ad extends Model
         return $this->hasOne(DigitalAd::class);
     }
     public function personalAd()
+    {
+        return $this->hasOne(PersonalAd::class);
+    }
+    public function businessAd()
     {
         return $this->hasOne(PersonalAd::class);
     }

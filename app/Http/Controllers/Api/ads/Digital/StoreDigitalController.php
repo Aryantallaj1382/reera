@@ -59,12 +59,14 @@ class StoreDigitalController extends Controller
                 'digital_model_id' => 'required|max:255',
                 'view_time' => 'required',
                 'condition' => 'required',
+                'type' => 'required',
             ]);
 
             $ad = Ad::create([
                 'user_id' => 1,
                 'category_id' => $request->category_id,
                 'title' => $request->title,
+                'type' => $request->type,
             ]);
             DigitalAd::create([
                 'ad_id' => $ad->id,

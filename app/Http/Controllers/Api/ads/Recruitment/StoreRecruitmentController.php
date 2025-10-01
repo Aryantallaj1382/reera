@@ -1,45 +1,66 @@
 <?php
 
-namespace App\Http\Controllers\Api\ads\Kitchen;
+namespace App\Http\Controllers\Api\ads\Recruitment;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ad;
 use App\Models\AdAddress;
 use App\Models\AdImage;
+use App\Models\Category\Category;
 use App\Models\Currency;
-use App\Models\Kitchen\KitchenAd;
-use App\Models\Kitchen\KitchenBrand;
-use App\Models\Kitchen\KitchenType;
+use App\Models\Language;
+use App\Models\PersonalAd;
+use App\Models\PersonalAdType;
+use App\Models\RecruitmentAd;
+use App\Models\RecruitmentCategory;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-
-class StoreKitchenController extends Controller
+class StoreRecruitmentController extends Controller
 {
     public function index(Request $request)
     {
+        $categories = Category::with('children.children')->whereNull('parent_id')->get();
 
-        $c = Currency::select(['id', 'title', 'code'])->get();
+        $result = $categories->map(function ($category) {
+            $format = function ($cat) use (&$format) {
+                return [
+                    'id' => $cat->id,
+                    'title' => $cat->title,
+                    'slug' => $cat->slug,
+                    'children' => $cat->children->map(function ($child) use (&$format) {
+                        return $format($child);
+                    }),
+                ];
+            };
 
-        $brand = KitchenBrand::all();
-        $model = KitchenType::all();
+            return $format($category);
+        });
+
+        $a = RecruitmentCategory::all();
+        $l = Language::all();
+
+        $c = Currency::select('id', 'title', 'code')->get();
 
         return api_response(
             [
                 'currency' => $c,
-                'brands' => $brand,
-                'models' => $model,
+                'category' => $a,
+                'language' => $l,
+                'price' => 30
             ]
         );
     }
-
     public function first(Request $request)
     {
         $request->validate([
             'category_id' => 'required|integer|exists:categories,id',
-            'title' => 'required',
-            'kitchen_brand_id' => 'required',
-            'kitchen_type_id' => 'required',
+            'title' => 'required|string|max:255',
+            'languages_id' => 'required|max:255',
+            'recruitment_categories_id' => 'required|max:255',
+            'days' => 'required',
+            'time' => 'required',
+            'price' => 'required',
             'type' => 'required',
+            'work_type' => 'required',
 
         ]);
 
@@ -48,19 +69,22 @@ class StoreKitchenController extends Controller
             'category_id' => $request->category_id,
             'title' => $request->title,
             'type' => $request->type,
+            'price' => $request->price,
 
         ]);
-        KitchenAd::create([
+        RecruitmentAd::create([
             'ad_id' => $ad->id,
-            'kitchen_brand_id' => $request->kitchen_brand_id,
-            'kitchen_type_id' => $request->kitchen_type_id,
-
+            'languages_id' => $request->languages_id,
+            'recruitment_categories_id' => $request->recruitment_categories_id,
+            'days' => $request->days,
+            'time' => $request->time,
+            'price' => $request->price,
+            'type' => $request->work_type,
         ]);
 
         return api_response($ad->id, __('messages.saved_successfully'));
 
     }
-
     public function second(Request $request)
     {
         $request->validate([
@@ -71,7 +95,6 @@ class StoreKitchenController extends Controller
             'full_address' => 'required|string|max:255',
             'longitude' => 'required|string|max:255',
             'latitude' => 'required|string|max:255',
-
         ]);
         $ad = Ad::find($request->ad_id);
         AdAddress::create([
@@ -83,7 +106,6 @@ class StoreKitchenController extends Controller
             'longitude' => $request->longitude,
             'latitude' => $request->latitude,
         ]);
-
         return api_response([], __('messages.saved_successfully'));
 
     }
@@ -91,21 +113,19 @@ class StoreKitchenController extends Controller
     {
         $request->validate([
             'ad_id' => 'required|integer|exists:ads,id',
-            'condition' => 'nullable',
-            'text' => 'nullable',
+            'details' => 'nullable',
+
 
         ]);
 
         $ad = Ad::find($request->ad_id);
-        $ad->kitchenAds()->update([
-            'condition' => $request->condition,
-            'text' => $request->text,
+        $ad->recruitmentAd()->update([
+            'details' => $request->details
 
         ]);
         return api_response([], __('messages.saved_successfully'));
 
     }
-
     public function fourth(Request $request)
     {
         $data = $request->validate([
@@ -140,11 +160,10 @@ class StoreKitchenController extends Controller
             'my_phone' => 'nullable',
             'other_phone' => 'nullable',
             'other_phone_number' => 'nullable',
-
         ]);
 
         $ad = Ad::find($request->ad_id);
-        $ad->kitchenAds()->update([
+        $ad->recruitmentAd()->update([
             'site_massage' => $request->site_massage,
             'my_phone' => $request->my_phone,
             'other_phone' => $request->other_phone,
@@ -153,31 +172,46 @@ class StoreKitchenController extends Controller
 
         return api_response([], __('messages.saved_successfully'));
     }
-
     public function sixth(Request $request)
     {
         $request->validate([
             'ad_id' => 'required|integer|exists:ads,id',
-            'currencies_id' =>'required',
-            'price' => 'required|numeric|min:0',
-            'donation' => 'required|numeric|min:0',
-            'cash' => 'nullable',
-            'installments' => 'nullable',
-            'check' => 'nullable',
+            'degree' =>'required',
+            'skill' => 'required',
+            'role' => 'nullable',
+
+
         ]);
 
+
         $ad = Ad::find($request->ad_id);
-        $ad->kitchenAds()->update([
-            'currencies_id' => $request->currencies_id,
-            'price' => $request->price,
-            'donation' => $request->donation,
-            'cash' => $request->cash,
-            'installments' => $request->installments,
-            'check' => $request->check,
+        $ad->recruitmentAd()->update([
+            'degree' => $request->degree,
+            'skill' => $request->skill,
+            'role' => $request->role,
+
+
         ]);
         return api_response([], __('messages.saved_successfully'));
 
     }
+    public function seventh(Request $request)
+    {
+        $request->validate([
+            'ad_id' => 'required|integer|exists:ads,id',
+            'plan_type' => 'required',
 
+
+        ]);
+
+        $ad = Ad::find($request->ad_id);
+        $ad->recruitmentAd()->update([
+            'plan_type' => $request->price,
+
+
+        ]);
+        return api_response([], __('messages.saved_successfully'));
+
+    }
 
 }

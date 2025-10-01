@@ -10,6 +10,7 @@ use App\Models\Category\Category;
 use App\Models\Currency;
 use App\Models\Digital\DigitalAd;
 use App\Models\PersonalAd;
+use App\Models\PersonalAdType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -35,12 +36,15 @@ class PersonalAdController extends Controller
             return $format($category);
         });
 
+        $a = PersonalAdType::all();
+
         $c = Currency::select('id', 'title', 'code')->get();
 
         return api_response(
             [
                 'categories' => $result,
                 'currency' => $c,
+                'type' => $a
             ]
         );
     }
@@ -51,12 +55,16 @@ class PersonalAdController extends Controller
             'title' => 'required|string|max:255',
             'personal_ads_type_id' => 'required|max:255',
             'gender' => 'required',
+            'type' => 'required',
+
         ]);
 
         $ad = Ad::create([
             'user_id' => 1,
             'category_id' => $request->category_id,
             'title' => $request->title,
+            'type' => $request->type,
+
         ]);
         PersonalAd::create([
             'ad_id' => $ad->id,
@@ -113,33 +121,23 @@ class PersonalAdController extends Controller
     {
         $data = $request->validate([
             'ad_id' => 'required|exists:ads,id',
-            'images' => 'nullable|array',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'images' => 'required|array',
+            'images.*.image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'images.*.is_main' => 'required|boolean',
         ], [], [
             'ad_id' => 'آگهی',
             'images' => 'عکس‌ها',
-            'image' => 'عکس اصلی',
+            'images.*.image' => 'عکس',
+            'images.*.is_main' => 'اصلی بودن',
         ]);
 
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $imageFile) {
-                $path = $imageFile->store('ad_images', 'public');
-                AdImage::create([
-                    'ad_id' => $data['ad_id'],
-                    'image_path' => $path,
-                    'is_main' => false,
-                ]);
-            }
-        }
+        foreach ($request->images as $img) {
+            $path = $img['image']->store('ad_images', 'public');
 
-        if ($request->hasFile('image')) {
-            $mainImage = $request->file('image');
-            $mainPath = $mainImage->store('ad_images', 'public');
             AdImage::create([
                 'ad_id' => $data['ad_id'],
-                'image_path' => $mainPath,
-                'is_main' => true,
+                'image_path' => $path,
+                'is_main' => $img['is_main'],
             ]);
         }
 
@@ -171,7 +169,7 @@ class PersonalAdController extends Controller
             'ad_id' => 'required|integer|exists:ads,id',
             'currencies_id' =>'required',
             'price' => 'required|numeric|min:0',
-            'deposit' => 'required|numeric|min:0',
+            'donation' => 'nullable|numeric|min:0',
             'cash' => 'nullable',
             'installments' => 'nullable',
             'check' => 'nullable',
@@ -182,7 +180,7 @@ class PersonalAdController extends Controller
         $ad->personalAd()->update([
             'currencies_id' => $request->currencies_id,
             'price' => $request->price,
-            'deposit' => $request->deposit,
+            'donation' => $request->donation,
             'cash' => $request->cash,
             'installments' => $request->installments,
             'check' => $request->check,
