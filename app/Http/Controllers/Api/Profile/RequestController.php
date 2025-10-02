@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Profile;
 use App\Http\Controllers\Controller;
 use App\Models\Ad;
 use App\Models\Category\Category;
+use App\Models\UserAttribute;
 use Illuminate\Http\Request;
 
 class RequestController extends Controller

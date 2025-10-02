@@ -18,71 +18,30 @@ class AdsController extends Controller
     {
         $query = Ad::query();
 
-        if ($request->has('category_id')) {
-            $categoryId = $request->category_id;
-
-            $category = Category::with('children')->find($categoryId);
-
-            if ($category) {
-                $ids = collect([$category->id])
-                    ->merge($category->children->pluck('id'))
-                    ->toArray();
-
-                $query->whereIn('category_id', $ids);
-            }
+        $query->filterCommon($request);
+        if ($request->category_slug == 'housing') {
+            $query->filterHousing($request);
+        } elseif ($request->category_slug == 'vehicles') {
+            $query->vehicles($request);
         }
-
-
-        $query->when($request->country_id, function ($q) use ($request) {
-            $q->whereHas('address', function ($q2) use ($request) {
-                $q2->where('country_id', $request->country_id);
-            });
-        });
-
-        $query->when($request->city_id, function ($q) use ($request) {
-            $q->whereHas('address', function ($q2) use ($request) {
-                $q2->where('city_id', $request->city_id);
-            });
-        });
-
-        $query->when($request->region, function ($q) use ($request) {
-            $q->whereHas('address', function ($q2) use ($request) {
-                $q2->where('region', $request->region);
-            });
-        });
-        $query->when($request->currency, fn($q) => $q->where('currency_id', $request->currency));
-        $query->when($request->min_price, fn($q) => $q->where('price', '>=', $request->min_price));
-        $query->when($request->max_price, fn($q) => $q->where('price', '<=', $request->max_price));
-        $query->when($request->has('is_verified'), fn($q) =>
-        $q->where('is_verified', $request->is_verified)
-        );
-        switch ($request->sort) {
-            case 'oldest':
-                $query->orderBy('created_at', 'asc');
-                break;
-            case 'expensive':
-                $query->orderBy('price', 'desc');
-                break;
-            case 'cheap':
-                $query->orderBy('price', 'asc');
-                break;
-            default: // newest
-                $query->orderBy('created_at', 'desc');
-                break;
+        elseif ($request->category_slug == 'digital') {
+            $query->digital($request);
         }
 
         $ads = $query->latest()->paginate();
 
         $ads->getCollection()->transform(function ($ad) {
             return [
-                'id' => $ad->id,
-                'title' => $ad->title,
-                'time' => $ad->time_ago,
-                'image' => $ad->image,
+                'id'          => $ad->id,
+                'title'       => $ad->title,
+                'time'        => $ad->time_ago,
+                'image'       => $ad->image,
                 'is_verified' => $ad->is_verified,
-                'location' => $ad->location,
-                'category' => $ad->category->title,
+                'location'    => $ad->location,
+                'category'    => $ad->category->title,
                 'custom_info' => $ad->custom_info,
+                'root_category_slug' => $ad->root_category_slug,
+                'price' => $ad->price,
             ];
         });
 

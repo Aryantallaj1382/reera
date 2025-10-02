@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class BusinessAd extends Model
 {
+
     use HasFactory;
 
     protected $table = 'business_ads';

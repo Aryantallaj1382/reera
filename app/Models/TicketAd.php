@@ -28,10 +28,6 @@ class TicketAd extends Model
         'installments',
         'check',
     ];
-
-    /**
-     * ارتباط با جدول آگهی‌ها
-     */
     public function ad()
     {
         return $this->belongsTo(Ad::class, 'ad_id');

@@ -141,12 +141,18 @@ class StoreDigitalController extends Controller
             'images.*.is_main' => 'اصلی بودن',
         ]);
 
-        foreach ($request->images as $img) {
-            $path = $img['image']->store('ad_images', 'public');
 
+        foreach ($request->images as $img) {
+            $file = $img['image']; // فایل آپلود شده
+            $destinationPath = public_path('ad_images');
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $file->move($destinationPath, $fileName);
             AdImage::create([
                 'ad_id' => $data['ad_id'],
-                'image_path' => $path,
+                'image_path' => 'ad_images/' . $fileName,
                 'is_main' => $img['is_main'],
             ]);
         }
@@ -179,7 +185,7 @@ class StoreDigitalController extends Controller
             'ad_id' => 'required|integer|exists:ads,id',
             'currencies_id' =>'required',
             'price' => 'required|numeric|min:0',
-            'deposit' => 'required|numeric|min:0',
+            'donation' => 'required|numeric|min:0',
             'cash' => 'nullable',
             'installments' => 'nullable',
             'check' => 'nullable',
@@ -190,7 +196,7 @@ class StoreDigitalController extends Controller
         $ad->digitalAd()->update([
             'currencies_id' => $request->currencies_id,
             'price' => $request->price,
-            'deposit' => $request->deposit,
+            'deposit' => $request->donation,
             'cash' => $request->cash,
             'installments' => $request->installments,
             'check' => $request->check,

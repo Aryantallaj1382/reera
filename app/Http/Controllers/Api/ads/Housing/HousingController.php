@@ -55,20 +55,24 @@ class HousingController extends Controller
         return api_response($transformed);
     }
 
-    public function show($slug)
+    public function show($id)
     {
-        $ad = Ad::where('slug', $slug)->with('housingAds')->first();
+        $ad = Ad::with('housingAds')->find($id);
         $return =[
             'id' => $ad->id,
             'title' => $ad->title,
             'slug' => $ad->slug,
-            'image' => $ad->images->pluck('image_path')->toArray(),
-            'price' => $ad->housingAds->price,
-            'time' => $ad->time_ago,
-            'location' => $ad->location,
-            'membership' => $ad->user->membership_duration,
-            'user' => $ad->user->name,
+            'image' => getImages($ad->id),
+            'address' => getAddress($ad->id),
+            'seller' => getSeller($ad->id),
             'category' => $ad->category->title,
+            'category_parent' => $ad->category->parent->title,
+            'price' => $ad->housingAds->price,
+            'area' => $ad->housingAds->area,
+            'number_of_bedrooms' => $ad->housingAds->number_of_bedrooms,
+            'location' => $ad->location,
+            'time' => $ad->time_ago,
+            'membership' => $ad->user->membership_duration,
             'elevator' => $ad->housingAds->elevator,
             'parking' => $ad->housingAds->parking,
             'furnished' => $ad->housingAds->furnished,
@@ -80,9 +84,7 @@ class HousingController extends Controller
             'empty' => $ad->housingAds->empty,
             'in_use' => $ad->housingAds->in_use,
             'visit_from' => $ad->housingAds->visit_from,
-            'number_of_bedrooms' => $ad->housingAds->number_of_bedrooms,
             'year' => $ad->housingAds->year,
-            'area' => $ad->housingAds->area,
             'text' => $ad->housingAds->text,
             'family' => $ad->housingAds->family,
             'woman' => $ad->housingAds->woman,

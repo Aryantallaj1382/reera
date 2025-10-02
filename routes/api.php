@@ -35,7 +35,7 @@ Route::prefix('ads')->controller(AdsController::class)->group(function () {
     Route::get('/get_filters',  'get_filters');
     Route::post('/like/{id}',  'toggleLike')->middleware('auth:sanctum');
     Route::prefix('house')->controller(HousingController::class)->group(function () {
-        Route::get('/{slug}', 'show');
+        Route::get('/{id}', 'show');
         Route::get('/ ', 'index');
         Route::get('/get_filters', 'get_filters');
         Route::get('/currency', [AdsController::class, 'rates']);
@@ -43,6 +43,8 @@ Route::prefix('ads')->controller(AdsController::class)->group(function () {
     });
 
 });
+Route::post('/comment',  [\App\Http\Controllers\CommentController::class, 'store'])->middleware('auth:sanctum');
+
 Route::prefix('store')->group(function () {
 
     Route::prefix('housing')->controller(StoreHousingController::class)->group(function () {
@@ -162,6 +164,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/finances/{id}',  'updateFinance');
         Route::delete('/finances/{id}',  'destroyFinance');
 
+        Route::prefix('request')->controller(\App\Http\Controllers\Api\Profile\ChatController::class)->group(function () {
+            Route::get('/',  'myAds');
+            Route::get('/adChats/{id}',  'adChats');
+            Route::post('/accept/{id}',  'accept');
+            Route::post('/rejected/{id}',  'rejected');
+        });
 
         Route::get('/video',  'showIntroVideo');
         Route::post('/video',  'storeIntroVideo');

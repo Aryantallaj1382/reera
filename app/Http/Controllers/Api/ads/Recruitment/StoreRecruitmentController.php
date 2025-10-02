@@ -140,16 +140,21 @@ class StoreRecruitmentController extends Controller
             'images.*.is_main' => 'اصلی بودن',
         ]);
 
-        foreach ($request->images as $img) {
-            $path = $img['image']->store('ad_images', 'public');
 
+        foreach ($request->images as $img) {
+            $file = $img['image']; // فایل آپلود شده
+            $destinationPath = public_path('ad_images');
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $file->move($destinationPath, $fileName);
             AdImage::create([
                 'ad_id' => $data['ad_id'],
-                'image_path' => $path,
+                'image_path' => 'ad_images/' . $fileName,
                 'is_main' => $img['is_main'],
             ]);
         }
-
         return api_response([], __('messages.saved_successfully'));
     }
     public function fifth(Request $request)

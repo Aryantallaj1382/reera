@@ -9,7 +9,7 @@ class Comment extends Model
     protected $fillable = [
         'body', 'user_id', 'parent_id', 'status',
         'owner_behavior_rating', 'price_clarity_rating',
-        'info_honesty_rating', 'cleanliness_rating',
+        'info_honesty_rating', 'cleanliness_rating','commentable_type' , 'commentable_id'
     ];
     public function getStatusLabelAttribute()
     {

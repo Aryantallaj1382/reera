@@ -12,4 +12,9 @@ class AdImage extends Model
     {
         return $this->belongsTo(Ad::class);
     }
+    public function getImagePathAttribute($value)
+    {
+        return $value? url('public/'.$value) : null;
+
+    }
 }

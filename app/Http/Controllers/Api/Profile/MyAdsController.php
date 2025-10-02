@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\Profile;
 use App\Http\Controllers\Controller;
 use App\Models\Ad;
 use App\Models\Category\Category;
+use App\Models\Housemate\Housemate;
+use App\Models\UserAttribute;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -70,9 +72,11 @@ class MyAdsController extends Controller
             return api_response(null, 'Ads not found');
         }
         $ad->update([
-            'created_at' => Carbon::now()
+            'created_at' => Carbon::now(),
+            'status' => 'approved'
         ]);
         return api_response([], 'Ads update');
 
     }
+
 }

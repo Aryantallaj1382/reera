@@ -9,6 +9,7 @@ use App\Models\HousingAds\HousingAds;
 use App\Models\Kitchen\KitchenAd;
 use App\Models\Vehicle\Vehicle;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Morilog\Jalali\Jalalian;
@@ -36,33 +37,50 @@ class Ad extends Model
                 'condition' => $this->digitalAd->condition,
             ];
         }
+        if ($this->recruitmentAd) {
+            return [
+                'price' => $this->price,
+                'time' =>  $this->time,
+                'icon' => null
+
+            ];
+        }
         if ($this->kitchenAds) {
             return [
+                'condition' => $this->kitchenAds->condition,
 
             ];
         }
         if ($this->vehiclesAds) {
             return [
-            ];
-        }
-        if ($this->recruitmentAd) {
-            return [
-                'type'
+                'model' => $this->vehiclesAds?->model?->name  ,
+                'brand' => $this->vehiclesAds?->brand?->name  ,
 
             ];
         }
+
         if ($this->serviceAds) {
             return [
+                'expertise' => $this->serviceAds?->expertise?->name  ,
+
 
             ];
         }
         if ($this->housemate) {
             return [
+                'x' => calculateCompatibilityPrecise($this->housemate->id , auth()->id()),
 
             ];
         }
         if ($this->personalAd) {
             return [
+                'expertise' => $this->personalAd?->type?->name  ,
+
+            ];
+        }
+        if ($this->businessAd) {
+            return [
+                'condition' => $this->businessAd?->condition  ,
 
             ];
         }
@@ -169,8 +187,9 @@ class Ad extends Model
     }
     public function businessAd()
     {
-        return $this->hasOne(PersonalAd::class);
+        return $this->hasOne(BusinessAd::class);
     }
+
 
 
     public function getLocationAttribute(): string
@@ -221,5 +240,110 @@ class Ad extends Model
         }
 
         return $slug;
+    }
+    public function chats()
+    {
+        return $this->hasMany(Chat::class);
+    }
+
+    /////// filtes
+    public function scopeFilterCommon($query, $request)
+    {
+        $query->when($request->category_id ?? $request->category_slug, function ($q) use ($request) {
+            $category = null;
+
+            if ($request->category_id) {
+                $category = Category::with('children')->find($request->category_id);
+            } elseif ($request->category_slug) {
+                $category = Category::with('children')->where('slug', $request->category_slug)->first();
+            }
+
+            if ($category) {
+                $ids = $category->getAllIds()->toArray();
+                $q->whereIn('category_id', $ids);
+            }
+        });
+
+
+        $query->when($request->country_id, function ($q) use ($request) {
+            $q->whereHas('address', function ($q2) use ($request) {
+                $q2->where('country_id', $request->country_id);
+            });
+        });
+
+        $query->when($request->city_id, function ($q) use ($request) {
+            $q->whereHas('address', function ($q2) use ($request) {
+                $q2->where('city_id', $request->city_id);
+            });
+        });
+
+        $query->when($request->region, function ($q) use ($request) {
+            $q->whereHas('address', function ($q2) use ($request) {
+                $q2->where('region', $request->region);
+            });
+        });
+        $query->when($request->currency, fn($q) => $q->where('currency_id', $request->currency));
+        $query->when($request->min_price, fn($q) => $q->where('price', '>=', $request->min_price));
+        $query->when($request->max_price, fn($q) => $q->where('price', '<=', $request->max_price));
+        $query->when($request->has('is_verified'), fn($q) =>
+        $q->where('is_verified', $request->is_verified)
+        );
+        switch ($request->sort) {
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'expensive':
+                $query->orderBy('price', 'desc');
+                break;
+            case 'cheap':
+                $query->orderBy('price', 'asc');
+                break;
+            default: // newest
+                $query->orderBy('created_at', 'desc');
+                break;
+        }
+        return $query;
+    }
+    public function scopeFilterHousing($query, $request)
+    {
+        return $query->whereHas('housingAds', function ($q) use ($request) {
+            if ($request->filled('bedrooms')) {
+                $q->where('number_of_bedrooms', $request->bedrooms);
+            }
+            if ($request->filled('area_min')) {
+                $q->where('area', '>=', $request->area_min);
+            }
+        });
+    }
+    public function scopeVehicles($query, $request)
+    {
+        return $query->whereHas('vehiclesAds', function ($q) use ($request) {
+            if ($request->filled('bedrooms')) {
+                $q->where('number_of_bedrooms', $request->bedrooms);
+            }
+            if ($request->filled('area_min')) {
+                $q->where('area', '>=', $request->area_min);
+            }
+        });
+    }
+    public function scopeDigital($query, $request)
+    {
+        return $query->whereHas('digitalAd', function ($q) use ($request) {
+            if ($request->filled('condition')) {
+                $q->where('condition', $request->condition);
+            }
+        });
+    }
+    protected function rootCategorySlug(): Attribute
+    {
+        return Attribute::get(function () {
+            $category = $this->category;
+
+            while ($category && $category->parent) {
+                $category = $category->parent;
+            }
+
+            return $category ? $category->slug : null;
+        });
     }
 }

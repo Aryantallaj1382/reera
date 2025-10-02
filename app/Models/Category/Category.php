@@ -25,4 +25,14 @@ class Category extends Model
     {
         return $this->hasMany(Ad::class);
     }
+    public function getAllIds()
+    {
+        $ids = collect([$this->id]);
+
+        foreach ($this->children as $child) {
+            $ids = $ids->merge($child->getAllIds());
+        }
+
+        return $ids;
+    }
 }
