@@ -64,4 +64,22 @@ class RecruitmentAd extends Model
     {
         return $this->belongsTo(Currency::class, 'currencies_id');
     }
+
+    public function getPlanTypeNameAttribute()
+    {
+        return match ($this->plan_type) {
+
+            'free' => 'رایگان',
+            'vip' => 'وی آی پی',
+        };
+
+    }
+    public function getPymentStatusNameAttribute()
+    {
+        return match ($this->pyment_status) {
+
+            'pending' => 'در حال بررسی',
+            'paid' => 'پرداخت شده',
+        };
+    }
 }

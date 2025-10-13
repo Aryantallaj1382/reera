@@ -111,8 +111,8 @@
                                 @method('DELETE')
                                 <button type="submit" class="item-delete mlg-15" title="حذف" onclick="return confirm('آیا از حذف این نظر مطمئن هستید؟')"></button>
                             </form>
-{{--                            <a href="#" class="item-eye mlg-15" title="مشاهده"></a>--}}
-{{--                            <a href="#" class="item-edit" title="ویرایش"></a>--}}
+                            <a href="#" class="item-eye mlg-15" title="مشاهده"></a>
+                            <a href="#" class="item-edit" title="ویرایش"></a>
                         </td>
 
                     </tr>

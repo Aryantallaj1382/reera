@@ -17,8 +17,8 @@ return [
         'number_of_bathroom' => 'تعداد سرویس بهداشتی',
     ],
     'saved_successfully' => 'با موفقیت ذخیره شد.',
-    'deleted_successfully' => 'با موفقیت حذف شد.',
-    'not_found' => 'چیزی پیدا نشد.',
+    'updated_successfully' => 'با موفقیت ویرایش شد.',
+
 
 
 

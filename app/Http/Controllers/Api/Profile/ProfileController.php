@@ -4,12 +4,23 @@ namespace App\Http\Controllers\Api\Profile;
 
 use App\Http\Controllers\Controller;
 use App\Models\Finance;
+use App\Models\Language;
+use App\Models\Nationality;
 use App\Models\UserInfo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
+    public function info()
+    {
+        $n = Nationality::all();
+        $l = Language::all();
+        return api_response([
+            'nationalities' => $n,
+            'languages' => $l,
+        ]);
+    }
     public function profile(Request $request)
     {
         $user = auth()->user();
@@ -134,10 +145,12 @@ class ProfileController extends Controller
         $finance = Finance::where('user_id', $user->id)->where('id', $id)->firstOrFail();
 
         $validated = $request->validate([
-            'card_number' => 'sometimes|required|string|max:255',
+            'card_number' => 'required|string|max:255',
         ]);
 
-        $finance->update($validated);
+        $finance->update([
+            'card_number' => $validated['card_number'],
+        ]);
 
         return api_response( [], __('messages.saved_successfully'));
 
@@ -184,10 +197,13 @@ class ProfileController extends Controller
         $info = $user->info;
 
         if (!$info || !$info->intro_video) {
-            return response()->json(['message' => 'ویدیویی وجود ندارد.'], 404);
+            return api_response(['has_video' => false], 'ویدیویی وجود ندارد.',200);
         }
 
-        return api_response( [], __('messages.saved_successfully'));
+        return api_response([
+            'has_video' => false,
+            'video' => $info->intro_video,
+        ], __('messages.saved_successfully'));
 
     }
 
@@ -383,7 +399,6 @@ class ProfileController extends Controller
             'work_experiences.*.description' => 'nullable|string',
         ]);
 
-        // حذف همه سوابق قبلی
         $user->workExperiences()->delete();
 
         // ذخیره سوابق جدید

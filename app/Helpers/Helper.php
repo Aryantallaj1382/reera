@@ -181,6 +181,86 @@ function getSeller($id)
         'profile'=> $ad->user->profile,
         'duration'=> $ad->user->membership_duration,
         'ratings'=> $ad->user->ratings_summary,
+        'is_iran'=> $ad->user->is_iran,
     ];
 }
+
+ function getRates()
+{
+    return Cache::remember('currency_rates', 1800, function () { // 1800 ثانیه = 30 دقیقه
+        $response = Http::get('https://brsapi.ir/Api/Market/Gold_Currency.php?key=BAgwgwda6bntIUxQyXgMr5y4ar5Nc8rp');
+        if ($response->failed()) {
+            return null;
+        }
+
+
+        $data = $response->json();
+
+        // فقط دلار و یورو رو نگه داریم
+        $filtered = collect($data['currency'] ?? [])
+            ->whereIn('symbol', ['USD', 'EUR'])
+            ->mapWithKeys(fn ($item) => [
+                $item['symbol'] => [
+                    'price' => $item['price'],
+                    'unit' => $item['unit'],
+                    'date' => $item['date'],
+                    'time' => $item['time']
+                ]
+            ])->toArray();
+
+        return $filtered;
+    });
+
+}
+
+function convert($amount, $from = 'USD', $to = 'IRT')
+{
+    $rates = getRates();
+
+    if (!$rates || !isset($rates['USD']) || !isset($rates['EUR'])) {
+        return null;
+    }
+
+    $usdToToman = $rates['USD']['price'];
+    $eurToToman = $rates['EUR']['price'];
+
+    switch (strtoupper($from)) {
+        case 'USD':
+            $inToman = $amount * $usdToToman;
+            break;
+
+        case 'EUR':
+            $inToman = $amount * $eurToToman;
+            break;
+
+        case 'IRT':
+            $inToman = $amount;
+            break;
+
+        case 'IRR': // ریال
+            $inToman = $amount / 10;
+            break;
+
+        default:
+            return null;
+    }
+
+    switch (strtoupper($to)) {
+        case 'USD':
+            return $inToman / $usdToToman;
+
+        case 'EUR':
+            return $inToman / $eurToToman;
+
+        case 'IRT':
+            return $inToman;
+
+        case 'IRR': // تومان به ریال
+            return $inToman * 10;
+
+        default:
+            return null;
+    }
+}
+
 

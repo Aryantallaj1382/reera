@@ -112,7 +112,15 @@ class User extends Authenticatable
         return $this->hasMany(UserAttribute::class);
     }
 
+    public function nationalty()
+    {
+        return $this->belongsTo(Nationality::class);
+    }
+    public function getIsIranAttribute()
+    {
+        return $this?->nationality?->id == 1 ? true : false;
 
+    }
     public function adComments()
     {
         return $this->hasManyThrough(
@@ -155,7 +163,7 @@ class User extends Authenticatable
 
         // محاسبه میانگین کلی (از ۴ فیلد)
         $allRatings = array_filter([$owner_behavior, $price_clarity, $info_honesty, $cleanliness]);
-        $overall = !empty($allRatings) ? round(array_sum($allRatings) / count($allRatings), 1) : null;
+        $overall = !empty($allRatings) ? round(array_sum($allRatings) / count($allRatings), 1) : 0;
 
         return $overall;
     }

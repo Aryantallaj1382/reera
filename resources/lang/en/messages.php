@@ -16,8 +16,8 @@ return [
         'number_of_bathroom' => 'number of bathrooms',
     ],
     'saved_successfully' => 'Saved successfully.',
-    'deleted_successfully' => 'deleted successfully.',
-    'not_found' => 'not found.',
+    'updated_successfully' => 'updated successfully',
+
 
 
 

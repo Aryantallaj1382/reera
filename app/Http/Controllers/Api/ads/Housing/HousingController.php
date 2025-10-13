@@ -58,6 +58,10 @@ class HousingController extends Controller
     public function show($id)
     {
         $ad = Ad::with('housingAds')->find($id);
+        if(!$ad->housingAds)
+        {
+            return api_response([], 'wrong id');
+        }
         $return =[
             'id' => $ad->id,
             'title' => $ad->title,
@@ -66,31 +70,66 @@ class HousingController extends Controller
             'address' => getAddress($ad->id),
             'seller' => getSeller($ad->id),
             'category' => $ad->category->title,
-            'category_parent' => $ad->category->parent->title,
+            'category_parent' => $ad-> rootC_category_title,
             'price' => $ad->housingAds->price,
+            'donation' => $ad->housingAds->donation,
+            'currency_code' => $ad->housingAds?->currency?->code,
+            'currency' => $ad->housingAds->currency?->title,
             'area' => $ad->housingAds->area,
+
             'number_of_bedrooms' => $ad->housingAds->number_of_bedrooms,
             'location' => $ad->location,
             'time' => $ad->time_ago,
             'membership' => $ad->user->membership_duration,
-            'elevator' => $ad->housingAds->elevator,
-            'parking' => $ad->housingAds->parking,
-            'furnished' => $ad->housingAds->furnished,
-            'internet' => $ad->housingAds->internet,
-            'pet' => $ad->housingAds->pet,
-            'washing_machine' => $ad->housingAds->washing_machine,
-            'balcony' => $ad->housingAds->balcony,
-            'system' => $ad->housingAds->system,
-            'empty' => $ad->housingAds->empty,
-            'in_use' => $ad->housingAds->in_use,
-            'visit_from' => $ad->housingAds->visit_from,
             'year' => $ad->housingAds->year,
             'text' => $ad->housingAds->text,
             'family' => $ad->housingAds->family,
             'woman' => $ad->housingAds->woman,
+            'distance' => [
+                'distance_from_shopping_center' => $ad->housingAds->distance_from_shopping_center,
+                'distance_from_taxi_stand' => $ad->housingAds->distance_from_taxi_stand,
+                'distance_from_gas_station' => $ad->housingAds->distance_from_gas_station,
+                'distance_from_hospital' => $ad->housingAds->distance_from_hospital,
+                'distance_from_bus_station' => $ad->housingAds->distance_from_bus_station,
+                'distance_from_airport' => $ad->housingAds->distance_from_airport,
+            ] ,
             'man' => $ad->housingAds->man,
             'student' => $ad->housingAds->student,
             'rules' => $ad->housingAds->rules,
+            'contact' => [
+                'site_massage' => $ad->housingAds->site_massage,
+                'my_phone' => $ad->housingAds->my_phone,
+                'mobile' => $ad->housingAds->mobile,
+            ],
+            'use' => $ad->housingAds->use,
+            'facilities'=> [
+                'elevator' => $ad->housingAds->elevator,
+                'parking' => $ad->housingAds->parking,
+                'furnished' => $ad->housingAds->furnished,
+                'internet' => $ad->housingAds->internet,
+                'pet' => $ad->housingAds->pet,
+                'washing_machine' => $ad->housingAds->washing_machine,
+                'balcony' => $ad->housingAds->balcony,
+                'system' => $ad->housingAds->system,
+                'empty' => $ad->housingAds->empty,
+                'in_use' => $ad->housingAds->in_use,
+                'visit_from' => $ad->housingAds->visit_from,
+                'storage' => $ad->housingAds->storage,
+                'cooling' => $ad->housingAds->cooling,
+                'heating' => $ad->housingAds->heating,
+                'open_kitchen' => $ad->housingAds->open_kitchen,
+                'cabinets' => $ad->housingAds->cabinets,
+                'flooring' => $ad->housingAds->flooring,
+                'security_door' => $ad->housingAds->security_door,
+                'double_glazed_windows' => $ad->housingAds->double_glazed_windows,
+                'security_guard' => $ad->housingAds->security_guard,
+                'cctv' => $ad->housingAds->cctv,
+                'generator' => $ad->housingAds->generator,
+                'master_bedroom' => $ad->housingAds->master_bedroom,
+                'guest_hall' => $ad->housingAds->guest_hall,
+                'gym' => $ad->housingAds->gym,
+                'pool' => $ad->housingAds->pool,
+            ],
 
 
         ];
@@ -100,8 +139,7 @@ class HousingController extends Controller
 
     public function get_filters(Request $request)
     {
-        $mainCategory = Category::where('id', 1)->with('children')->first();
-
+        $mainCategory = Category::where('slug', 'housing')->with('children')->first();
         if (!$mainCategory) {
             return api_response([], 'دسته‌بندی اصلی پیدا نشد', false);
         }

@@ -53,40 +53,53 @@ class DigitalController extends Controller
         return api_response($transformed);
     }
 
-    public function show($slug)
+    public function show($id)
     {
-        $ad = Ad::where('slug', $slug)->with('digitalAd')->first();
+
+        $ad = Ad::with('digitalAd')->find($id);
+
+        if(!$ad->digitalAd)
+        {
+            return api_response([], 'wrong id');
+        }
         $return =[
+
             'id' => $ad->id,
             'title' => $ad->title,
             'slug' => $ad->slug,
-            'image' => $ad->images->pluck('image_path')->toArray(),
-            'price' => $ad->digitalAd->price,
-            'time' => $ad->time_ago,
-            'location' => $ad->location,
-            'membership' => $ad->user->membership_duration,
-            'user' => $ad->user->name,
+            'image' => getImages($ad->id),
+            'address' => getAddress($ad->id),
+            'seller' => getSeller($ad->id),
             'category' => $ad->category->title,
-            'phone_case' => $ad->digitalAd->phone_case,
-            'parking' => $ad->digitalAd->parking,
-            'furnished' => $ad->digitalAd->furnished,
-            'internet' => $ad->digitalAd->internet,
-            'pet' => $ad->digitalAd->pet,
-            'washing_machine' => $ad->digitalAd->washing_machine,
-            'balcony' => $ad->digitalAd->balcony,
-            'system' => $ad->digitalAd->system,
-            'empty' => $ad->digitalAd->empty,
-            'in_use' => $ad->digitalAd->in_use,
-            'visit_from' => $ad->digitalAd->visit_from,
-            'number_of_bedrooms' => $ad->digitalAd->number_of_bedrooms,
-            'year' => $ad->digitalAd->year,
-            'area' => $ad->digitalAd->area,
+            'compatibility' => $compatibility ??"برای مشخص شدن وارد حسابتان شوید",
+            'category_parent' => $ad->root_category_title,
+            'price' => $ad->digitalAd->price,
+            'donation' => $ad->digitalAd->donation ?? null,
+            'check' => $ad->digitalAd->check,
+            'installments' => $ad->digitalAd->installments,
+            'cash' => $ad->digitalAd->cash,
+            'currency_code' => $ad->digitalAd?->currency?->code,
+            'currency' => $ad->digitalAd->currency?->title,
+            'brand' => $ad->digitalAd->brand?->name,
+            'view_time' => $ad->digitalAd->view_time,
+            'model' => $ad->digitalAd->model?->name,
+            'condition' => $ad->digitalAd->condition,
+            'location' => $ad->location,
+            'details' => [
+                'phone_case' => $ad->digitalAd->phone_case,
+                'glass' => $ad->digitalAd->glass,
+                'stand' => $ad->digitalAd->stand,
+                'cable' => $ad->digitalAd->cable,
+            ],
+            'time' => $ad->time_ago,
+            'membership' => $ad->user->membership_duration,
             'text' => $ad->digitalAd->text,
-            'family' => $ad->digitalAd->family,
-            'woman' => $ad->digitalAd->woman,
-            'man' => $ad->digitalAd->man,
-            'student' => $ad->digitalAd->student,
-            'rules' => $ad->digitalAd->rules,
+            'contact' => [
+                'site_massage' => $ad->digitalAd->site_massage,
+                'my_phone' => $ad->digitalAd->my_phone,
+                'mobile' => $ad->digitalAd->mobile,
+            ],
+
 
 
         ];

@@ -27,4 +27,9 @@ class UserInfo extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function getIntroVideoAttribute($value)
+    {
+        return $value ? url($value) : null;
+
+    }
 }

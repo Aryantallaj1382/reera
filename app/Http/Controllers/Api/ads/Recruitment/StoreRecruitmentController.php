@@ -65,7 +65,7 @@ class StoreRecruitmentController extends Controller
         ]);
 
         $ad = Ad::create([
-            'user_id' => 1,
+            'user_id' => auth()->id(),
             'category_id' => $request->category_id,
             'title' => $request->title,
             'type' => $request->type,
@@ -214,6 +214,9 @@ class StoreRecruitmentController extends Controller
             'plan_type' => $request->price,
 
 
+        ]);
+        $ad->update([
+            'is_finish' => 1,
         ]);
         return api_response([], __('messages.saved_successfully'));
 

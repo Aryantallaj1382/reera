@@ -15,7 +15,7 @@ use App\Models\ServicesAd;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
-class ServicesController extends Controller
+class StoreServicesController extends Controller
 {
     public function index(Request $request)
     {
@@ -42,7 +42,7 @@ class ServicesController extends Controller
         ]);
 
         $ad = Ad::create([
-            'user_id' => 1,
+            'user_id' => auth()->id(),
             'category_id' => $request->category_id,
             'title' => $request->title,
             'type' => $request->type,
@@ -177,6 +177,9 @@ class ServicesController extends Controller
             'cash' => $request->cash,
             'installments' => $request->installments,
             'check' => $request->check,
+        ]);
+        $ad->update([
+            'is_finish' => 1,
         ]);
         return api_response([], __('messages.saved_successfully'));
 

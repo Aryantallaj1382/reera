@@ -18,6 +18,7 @@ return [
     ],
 
     'saved_successfully' => 'تم الحفظ بنجاح.',
-    'deleted_successfully' => 'تم الحذف بنجاح.',
-    'not_found' => 'لم يتم العثور عليه.',
+    'updated_successfully' => 'updated successfully',
+
+
 ];

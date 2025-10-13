@@ -13,12 +13,12 @@ class Chat extends Model
         return $this->hasMany(Message::class);
     }
 
-    public function userOne()
+    public function userOne() //درخواست دهنده
     {
         return $this->belongsTo(User::class, 'user_one_id');
     }
 
-    public function userTwo()
+    public function userTwo() // صاحب
     {
         return $this->belongsTo(User::class, 'user_two_id');
     }

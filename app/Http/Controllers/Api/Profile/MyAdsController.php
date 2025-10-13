@@ -18,28 +18,25 @@ class MyAdsController extends Controller
         if ($request->has('category_id')) {
             $categoryId = $request->category_id;
             $category = Category::with('children')->find($categoryId);
-
             if ($category) {
                 $ids = collect([$category->id])
                     ->merge($category->children->pluck('id'))
                     ->toArray();
-
                 $ads = $ads->whereIn('category_id', $ids);
             }
         }
-
         if ($request->filled('status')) {
             $ads = $ads->where('status', $request->status);
         }
-
-        $ads = $ads->paginate(10);
+        $ads = $ads->paginate(6);
         $ads->getCollection()->transform(function ($item) {
             return [
                 'id' => $item->id,
-                'title' => $item->title,
-                'slug' => $item->slug,
+                'user_id' => auth()->id(),
+                'title' => $item->title,س
+                'slug' => $item->root_category_title,
                 'custom_info' => $item->custom_info,
-                'image' => $item->main_image,
+                'image' => $item->image,
                 'status' => $item->status,
                 'price' => optional($item->housingAds)->price,
                 'time' => $item->time_ago,
@@ -77,6 +74,20 @@ class MyAdsController extends Controller
         ]);
         return api_response([], 'Ads update');
 
+
     }
 
+    public function sold($id)
+    {
+        $user = auth()->user()->id;
+        $ad = Ad::where('user_id', $user)->find($id);
+        if (!$ad) {
+            return api_response(null, 'Ads not found');
+        }
+        $ad->update([
+            'status' => 'sold'
+        ]);
+        return api_response([], 'Ads update');
+
+    }
 }

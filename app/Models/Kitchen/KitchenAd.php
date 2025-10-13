@@ -16,7 +16,17 @@ class KitchenAd extends Model
         return $this->belongsTo(Ad::class);
     }
 
-    // برند دیجیتال
+    public function getMobileAttribute()
+    {
+        if ($this->my_phone == true) {
+            return $this->ad->user->mobile;
+        } elseif ($this->other_phone == true) {
+            return $this->other_phone_number;
+
+        }
+        return null;
+
+    }
     public function brand()
     {
         return $this->belongsTo(KitchenBrand::class, 'kitchen_brand_id');

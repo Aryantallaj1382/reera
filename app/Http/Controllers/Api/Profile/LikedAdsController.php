@@ -12,6 +12,7 @@ class LikedAdsController extends Controller
     {
         $user = $request->user();
 
+//        $likedAds = Ad::get();
         $likedAds = Ad::whereHas('likes', function ($query) use ($user) {
             $query->where('user_id', $user->id);
         })
@@ -26,6 +27,9 @@ class LikedAdsController extends Controller
                 'custom_info' => $item->custom_info,
                 'image' => $item->main_image,
                 'location' => $item->location,
+                'remaining' => $item?->remaining,
+                'status' => $item->status,
+                'time' => $item->time_ago,
 
             ];
         });

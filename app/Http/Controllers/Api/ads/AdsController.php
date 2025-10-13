@@ -5,19 +5,23 @@ namespace App\Http\Controllers\Api\ads;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AdResource;
 use App\Models\Ad;
+use App\Models\AdReport;
 use App\Models\Category\Category;
+use App\Models\Chat;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\Currency;
+use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class AdsController extends Controller
 {
     public function index(Request $request)
     {
         $query = Ad::query();
-
+        $currency = $request->currency;
         $query->filterCommon($request);
         if ($request->category_slug == 'housing') {
             $query->filterHousing($request);
@@ -71,25 +75,8 @@ class AdsController extends Controller
     }
     public function rates()
     {
-        $response = Http::get('http://api.navasan.tech/latest/', [
-            'api_key' => 'free62J4lQnrVxIzehO9oyq0WBX8KTeS',
-            'item' => 'harat_naghdi_sell',
-        ]);
-
-        $data = $response->json();
-
-        if (!$response->successful() || !isset($data['harat_naghdi_sell'])) {
-            return response()->json([
-                'message' => 'داده معتبر از API دریافت نشد',
-                'data' => $data
-            ], 500);
-        }
-
-        return response()->json([
-            'price' => $data['harat_naghdi_sell']['value'],
-            'change' => $data['harat_naghdi_sell']['change'],
-            'datetime' => $data['harat_naghdi_sell']['date']
-        ]);
+        $a = getRates();
+        return api_response($a);
     }
     public function toggleLike(Request $request, $id)
     {
@@ -117,4 +104,70 @@ class AdsController extends Controller
         return api_response([], 'لایک شد');
     }
 
+    public function convert1(Request $request)
+    {
+
+        $a = convert($request->price , $request->from , $request->to );
+        return api_response($a);
+
+    }
+    public function store(Request $request, $adId)
+    {
+        $request->validate([
+            'reason' => 'nullable|string|max:191',
+        ]);
+
+        $ad = Ad::findOrFail($adId);
+
+        AdReport::create([
+            'reporter_id' => auth()->id(),
+            'ad_id'       => $ad->id,
+            'reason'      => $request->reason,
+            'status'      => 'pending',
+        ]);
+
+        return api_response([]);
+    }
+    public function delete($id)
+    {
+        $ad = Ad::find($id);
+
+        if (!$ad) {
+            return api_response([], __('messages.not_found'), 404);
+        }
+
+        foreach ($ad->images as $image) {
+            if (Storage::disk('public')->exists($image->image_path)) {
+                Storage::disk('public')->delete($image->image_path);
+            }
+            $image->delete();
+        }
+        $ad->delete();
+
+        return api_response([], __('messages.deleted_successfully'));
+    }
+    public function request_ad(Request $request , $id)
+    {
+        $ad = Ad::findOrFail($id);
+        $request->validate([
+            'text' => 'required',
+        ]);
+        $chat = Chat::where('user_one_id', auth()->id())->where('ad_id', $id)->first();
+        if ($chat) {
+            return api_response([], 'شما قبلا برای این درخواست دلده اید' , 422);
+        }
+        $chat = Chat::create([
+            'user_one_id' => auth()->id() ,
+            'user_two_id' => $ad->user->id,
+            'ad_id'       => $ad->id,
+            'status'      => 'pending',
+
+        ]);
+        $chat->messages()->create([
+           'sender_id' => auth()->id(),
+            'message' => $request->text,
+        ]);
+        return api_response([], 'درخواست ثبت شد');
+
+    }
 }

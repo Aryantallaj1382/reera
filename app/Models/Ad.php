@@ -11,8 +11,12 @@ use App\Models\Vehicle\Vehicle;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Morilog\Jalali\Jalalian;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Builder;
+
 
 class Ad extends Model
 {
@@ -20,9 +24,8 @@ class Ad extends Model
     protected $table = 'ads';
 
 
-    protected $fillable = [
-        'user_id', 'category_id', 'title', 'status', 'type' , 'created_at' , 'price'
-    ];
+    protected $guarded = [];
+
     public function getCustomInfoAttribute()
     {
         if ($this->housingAds) {
@@ -40,7 +43,9 @@ class Ad extends Model
         if ($this->recruitmentAd) {
             return [
                 'price' => $this->price,
-                'time' =>  $this->time,
+                'time' => $this->recruitmentAd->time,
+                'type' => $this->recruitmentAd->type,
+                'currency' => $this?->recruitmentAd?->currency?->title,
                 'icon' => null
 
             ];
@@ -53,34 +58,34 @@ class Ad extends Model
         }
         if ($this->vehiclesAds) {
             return [
-                'model' => $this->vehiclesAds?->model?->name  ,
-                'brand' => $this->vehiclesAds?->brand?->name  ,
+                'model' => $this->vehiclesAds?->model?->name,
+                'brand' => $this->vehiclesAds?->brand?->name,
 
             ];
         }
 
         if ($this->serviceAds) {
             return [
-                'expertise' => $this->serviceAds?->expertise?->name  ,
+                'expertise' => $this->serviceAds?->expertise?->name,
 
 
             ];
         }
         if ($this->housemate) {
             return [
-                'x' => calculateCompatibilityPrecise($this->housemate->id , auth()->id()),
+                'x' => calculateCompatibilityPrecise($this->housemate->id, auth()->id()),
 
             ];
         }
         if ($this->personalAd) {
             return [
-                'expertise' => $this->personalAd?->type?->name  ,
+                'expertise' => $this->personalAd?->type?->name,
 
             ];
         }
         if ($this->businessAd) {
             return [
-                'condition' => $this->businessAd?->condition  ,
+                'condition' => $this->businessAd?->condition,
 
             ];
         }
@@ -107,7 +112,7 @@ class Ad extends Model
             return 'today';
         }
 
-        return $daysLeft ;
+        return $daysLeft;
     }
 
     public function category()
@@ -119,6 +124,7 @@ class Ad extends Model
     {
         return $this->belongsTo(User::class);
     }
+
     public function likes()
     {
         return $this->morphMany(Like::class, 'likeable');
@@ -143,53 +149,64 @@ class Ad extends Model
         }
         return url($image->image_path);
     }
+
     public function address()
     {
         return $this->hasOne(AdAddress::class);
     }
 
     // مثال برای رابطه با جدول ویژگی خاص (مثلا خودرو)
-     public function housingAds()
-     {
-         return $this->hasOne(HousingAds::class);
-     }
+    public function housingAds()
+    {
+        return $this->hasOne(HousingAds::class);
+    }
+
     public function vehiclesAds()
     {
         return $this->hasOne(Vehicle::class);
     }
+
     public function recruitmentAd()
     {
         return $this->hasOne(RecruitmentAd::class);
     }
+
+
     public function ticket()
     {
         return $this->hasOne(TicketAd::class);
     }
+
     public function kitchenAds()
     {
         return $this->hasOne(KitchenAd::class);
     }
+
     public function serviceAds()
     {
         return $this->hasOne(ServicesAd::class);
     }
+
+
     public function housemate()
     {
         return $this->hasOne(Housemate::class);
     }
+
     public function digitalAd()
     {
         return $this->hasOne(DigitalAd::class);
     }
+
     public function personalAd()
     {
         return $this->hasOne(PersonalAd::class);
     }
+
     public function businessAd()
     {
         return $this->hasOne(BusinessAd::class);
     }
-
 
 
     public function getLocationAttribute(): string
@@ -218,6 +235,7 @@ class Ad extends Model
                 return __('messages.ad_time_ago', ['time' => Carbon::parse($created)->diffForHumans(null, true, false, 2)]);
         }
     }
+
     protected static function boot()
     {
         parent::boot();
@@ -241,6 +259,7 @@ class Ad extends Model
 
         return $slug;
     }
+
     public function chats()
     {
         return $this->hasMany(Chat::class);
@@ -285,8 +304,7 @@ class Ad extends Model
         $query->when($request->currency, fn($q) => $q->where('currency_id', $request->currency));
         $query->when($request->min_price, fn($q) => $q->where('price', '>=', $request->min_price));
         $query->when($request->max_price, fn($q) => $q->where('price', '<=', $request->max_price));
-        $query->when($request->has('is_verified'), fn($q) =>
-        $q->where('is_verified', $request->is_verified)
+        $query->when($request->has('is_verified'), fn($q) => $q->where('is_verified', $request->is_verified)
         );
         switch ($request->sort) {
             case 'oldest':
@@ -304,6 +322,7 @@ class Ad extends Model
         }
         return $query;
     }
+
     public function scopeFilterHousing($query, $request)
     {
         return $query->whereHas('housingAds', function ($q) use ($request) {
@@ -315,6 +334,7 @@ class Ad extends Model
             }
         });
     }
+
     public function scopeVehicles($query, $request)
     {
         return $query->whereHas('vehiclesAds', function ($q) use ($request) {
@@ -326,6 +346,7 @@ class Ad extends Model
             }
         });
     }
+
     public function scopeDigital($query, $request)
     {
         return $query->whereHas('digitalAd', function ($q) use ($request) {
@@ -334,6 +355,7 @@ class Ad extends Model
             }
         });
     }
+
     protected function rootCategorySlug(): Attribute
     {
         return Attribute::get(function () {
@@ -346,4 +368,28 @@ class Ad extends Model
             return $category ? $category->slug : null;
         });
     }
+
+    protected function rootCategoryTitle(): Attribute
+    {
+        return Attribute::get(function () {
+            $category = $this->category;
+
+            while ($category && $category->parent) {
+                $category = $category->parent;
+            }
+
+            return $category ? $category->slug : null;
+        });
+    }
+
+    public const statuses = [
+        'approved' => 'تایید شده',
+        'pending' => 'در حال بررسی',
+        'rejected' => 'رد شده',
+        'sold' => 'فروخته شده',
+    ];
+
+
+
+
 }
