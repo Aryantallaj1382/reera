@@ -113,14 +113,14 @@ class StoreRecruitmentController extends Controller
     {
         $request->validate([
             'ad_id' => 'required|integer|exists:ads,id',
-            'details' => 'nullable',
+                'custom_facilities' => 'nullable',
 
 
         ]);
 
         $ad = Ad::find($request->ad_id);
         $ad->recruitmentAd()->update([
-            'details' => $request->details
+            'details' => $request->custom_facilities
 
         ]);
         return api_response([], __('messages.saved_successfully'));
@@ -203,7 +203,7 @@ class StoreRecruitmentController extends Controller
     public function seventh(Request $request)
     {
         $request->validate([
-            'ad_id' => 'required|integer|exists:ads,id',
+            'ad_id' => 'required',
             'plan_type' => 'required',
 
 
@@ -211,7 +211,7 @@ class StoreRecruitmentController extends Controller
 
         $ad = Ad::find($request->ad_id);
         $ad->recruitmentAd()->update([
-            'plan_type' => $request->price,
+            'plan_type' => $request->plan_type,
 
 
         ]);

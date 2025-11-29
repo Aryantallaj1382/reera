@@ -36,6 +36,7 @@ class HousemateController
             'currency_code' => $ad->housemate?->currency?->code,
             'currency' => $ad->housemate->currency?->title,
             'area' => $ad->housemate->area,
+            'is_house' => false,
 
             'number_of_bedrooms' => $ad->housemate->number_of_bedrooms,
             'location' => $ad->location,
@@ -94,6 +95,8 @@ class HousemateController
             return [
                 'id' => $child->id,
                 'category' => $child->title,
+                'title_en' => $child->title_en,
+
             ];
         });
         $extraChildren = [];

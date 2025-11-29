@@ -73,6 +73,38 @@ class User extends Authenticatable
     {
         return $this->hasOne(UserInfo::class);
     }
+    public function getResumeCompletionAttribute()
+    {
+        $totalSections = 5;
+        $completedSections = 0;
+
+        // 1️⃣ اطلاعات پایه
+        if ($this->name && $this->age && $this->mobile && $this->image) {
+            $completedSections++;
+        }
+
+        // 2️⃣ زبان‌ها
+        if ($this->userLanguages()->exists()) {
+            $completedSections++;
+        }
+
+        // 3️⃣ سوابق کاری
+        if ($this->workExperiences()->exists()) {
+            $completedSections++;
+        }
+
+        // 4️⃣ تحصیلات
+        if ($this->educations()->exists()) {
+            $completedSections++;
+        }
+
+        // 5️⃣ مهارت‌ها
+        if ($this->skills()->exists()) {
+            $completedSections++;
+        }
+
+        return round(($completedSections / $totalSections) * 100);
+    }
 
     public function finances()
     {
@@ -171,6 +203,11 @@ class User extends Authenticatable
     {
         return $this->morphedByMany(Ad::class, 'likeable', 'likes')
             ->withTimestamps();
+    }
+    public function getNameAttribute()
+    {
+        return $this->first_name . ' ' .$this->last_name ;
+
     }
 
 

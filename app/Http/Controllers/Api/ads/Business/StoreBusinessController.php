@@ -69,13 +69,13 @@ class StoreBusinessController extends Controller
     {
         $request->validate([
             'ad_id' => 'required|integer|exists:ads,id',
-            'description' => 'nullable',
+            'text' => 'nullable',
 
         ]);
 
         $ad = Ad::find($request->ad_id);
         $ad->businessAd()->update([
-            'text' => $request->description,
+            'text' => $request->text,
 
         ]);
 

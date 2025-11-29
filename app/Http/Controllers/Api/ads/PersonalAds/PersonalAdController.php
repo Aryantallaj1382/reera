@@ -28,7 +28,7 @@ class PersonalAdController
             'price' => $ad->personalAd->price,
             'gender' => $ad->personalAd->gender,
             'personal_ads_type' => $ad->personalAd->type->name,
-            'donation' => $ad->personalAd->donation,
+            'donation' => $ad->personalAd->donation ?? null,
             'check' => $ad->personalAd->check,
             'installments' => $ad->personalAd->installments,
             'cash' => $ad->personalAd->cash,

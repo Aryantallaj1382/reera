@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Profile;
 
 use App\Http\Controllers\Controller;
+use App\Models\DigitalCurrency;
 use App\Models\Finance;
 use App\Models\Language;
 use App\Models\Nationality;
@@ -120,8 +121,6 @@ class ProfileController extends Controller
             'finances' => $finances,
         ]);
     }
-
-
     public function storeFinance(Request $request)
     {
         $user = $request->user();
@@ -138,6 +137,7 @@ class ProfileController extends Controller
 
         return api_response( [], __('messages.saved_successfully'));
     }
+
     public function updateFinance(Request $request, $id)
     {
         $user = $request->user();
@@ -160,6 +160,66 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $finance = Finance::where('user_id', $user->id)->where('id', $id)->firstOrFail();
+
+        $finance->delete();
+
+        return api_response([]);
+    }
+
+
+
+
+    public function DigitalCurrency(Request $request)
+    {
+        $user = $request->user();
+
+        $finances = DigitalCurrency::where('user_id', $user->id)->get();
+
+        return api_response([
+            'DigitalCurrency' => $finances,
+        ]);
+    }
+    public function storeDigitalCurrency(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'bitcoin' => 'nullable|string|max:255',
+            'ethereum' => 'nullable|string|max:255',
+            'usdt' => 'nullable|string|max:255',
+            'usdc' => 'nullable|string|max:255',
+            'litecoin' => 'nullable|string|max:255',
+            'bitcoin_cash' => 'nullable|string|max:255',
+            'dogecoin' => 'nullable|string|max:255',
+            'tron' => 'nullable|string|max:255',
+            'cardano' => 'nullable|string|max:255',
+            'polkadot' => 'nullable|string|max:255',
+        ]);
+
+        $finance = DigitalCurrency::updateOrCreate([
+            'user_id' => $user->id,
+        ],[
+            'user_id' => $user->id,
+            'bitcoin' => $validated['bitcoin'],
+            'ethereum' => $validated['ethereum'],
+            'usdt' => $validated['usdt'],
+            'usdc' => $validated['usdc'],
+            'litecoin' => $validated['litecoin'],
+            'bitcoin_cash' => $validated['bitcoin_cash'],
+            'dogecoin' => $validated['dogecoin'],
+            'tron' => $validated['tron'],
+            'cardano' => $validated['cardano'],
+            'polkadot' => $validated['polkadot'],
+            'status' => 'pending',
+        ]);
+
+        return api_response( [], __('messages.saved_successfully'));
+    }
+    public function destroyDigitalCurrency(Request $request, $id)
+    {
+        $user = $request->user();
+
+        $finance = DigitalCurrency::where('user_id', $user->id)->where('id', $id)->firstOrFail();
 
         $finance->delete();
 

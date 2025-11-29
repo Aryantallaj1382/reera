@@ -9,6 +9,8 @@ use App\Models\AdImage;
 use App\Models\BusinessAd;
 use App\Models\Digital\DigitalAd;
 use App\Models\Kitchen\KitchenAd;
+use App\Models\Ticket;
+use App\Models\TicketAd;
 use Illuminate\Http\Request;
 
 class UpdateTicketController extends Controller
@@ -24,6 +26,9 @@ class UpdateTicketController extends Controller
                 'category_id' => $ad->category_id,
                 'type' => $ad->type,
                 'title' => $ad->title,
+                'ticket_type_id' => $ad->ticket?->ticket_type_id,
+                'number' => $ad->ticket->number,
+                'date' => $ad->ticket->date,
             ],
             'second' => [
                 'country_id'  => $ad->address?->country?->id,
@@ -35,23 +40,22 @@ class UpdateTicketController extends Controller
 
             ],
             'third' => [
-                'phone_case' => $ad->personalAd->condition,
-                'text' => $ad->personalAd->text,
+                'text' => $ad->ticket->text,
             ],
             'fourth' =>$ad->images,
             'fifth' => [
-                'site_massage' => $ad->personalAd->site_massage,
-                'my_phone' => $ad->personalAd->my_phone,
-                'other_phone' => $ad->personalAd->other_phone,
-                'other_phone_number' => $ad->personalAd->other_phone_number,
+                'site_massage' => $ad->ticket->site_massage,
+                'my_phone' => $ad->ticket->my_phone,
+                'other_phone' => $ad->ticket->other_phone,
+                'other_phone_number' => $ad->ticket->other_phone_number,
             ],
             'sixth' => [
-                'currencies_id' =>$ad->personalAd?->currency?->title,
-                'price' => $ad->personalAd->price,
-                'donation' => $ad->personalAd->donation,
-                'cash' => $ad->personalAd->cash,
-                'installments' => $ad->personalAd->installments,
-                'check' => $ad->personalAd->check,
+                'currencies_id' =>$ad->ticket?->currency?->title,
+                'price' => $ad->ticket->price,
+                'donation' => $ad->ticket->donation,
+                'cash' => $ad->ticket->cash,
+                'installments' => $ad->ticket->installments,
+                'check' => $ad->ticket->check,
             ],
         ];
         return api_response($return);
@@ -62,29 +66,34 @@ class UpdateTicketController extends Controller
     public function first(Request $request, $id)
     {
         $request->validate([
-            'title' => 'required',
-            'kitchen_brand_id' => 'required',
-            'kitchen_type_id' => 'required',
+            'title' => 'nullable',
+            'ticket_type_id' => 'nullable',
+            'number' => 'nullable',
+            'date' => 'nullable',
+            'type' => 'nullable',
         ]);
 
         $ad = Ad::findOrFail($id);
 
         $ad->update([
-            'title'       => $request->title,
+            'title' => $request->title,
         ]);
 
-        $KitchenAd = KitchenAd::where('ad_id', $ad->id)->first();
+
+        $KitchenAd = TicketAd::where('ad_id', $ad->id)->first();
         if ($KitchenAd) {
             $KitchenAd->update([
-                'kitchen_brand_id' => $request->kitchen_brand_id,
-                'kitchen_type_id' => $request->kitchen_type_id,
+                'ticket_type_id' => $request->ticket_type_id,
+                'number' => $request->number,
+                'date' => $request->date,
 
             ]);
         } else {
-            KitchenAd::create([
+            TicketAd::create([
                 'ad_id' => $ad->id,
-                'kitchen_brand_id' => $request->kitchen_brand_id,
-                'kitchen_type_id' => $request->kitchen_type_id,
+                'ticket_type_id' => $request->ticket_type_id,
+                'number' => $request->number,
+                'date' => $request->date,
             ]);
         }
 
@@ -116,15 +125,13 @@ class UpdateTicketController extends Controller
     public function third(Request $request , $id)
     {
         $request->validate([
-            'condition' => 'nullable',
             'text' => 'nullable',
 
         ]);
 
         $ad = Ad::findOrFail($id);
 
-        $ad->kitchenAds()->update([
-            'condition' => $request->condition,
+        $ad->ticket()->update([
             'text' => $request->text,
         ]);
 
@@ -175,7 +182,7 @@ class UpdateTicketController extends Controller
 
         $ad = Ad::findOrFail($id);
 
-        $ad->digitalAd()->update([
+        $ad->ticket()->update([
             'site_massage' => $request->site_massage,
             'my_phone' => $request->my_phone,
             'other_phone' => $request->other_phone,
@@ -197,7 +204,7 @@ class UpdateTicketController extends Controller
 
         $ad = Ad::findOrFail($id);
 
-        $ad->digitalAd()->update([
+        $ad->ticket()->update([
             'currencies_id' => $request->currencies_id,
             'price' => $request->price,
             'donation' => $request->donation,

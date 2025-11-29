@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\ads\AdsController;
 use App\Http\Controllers\Api\ads\Business\BusinessController;
+use App\Http\Controllers\Api\ads\Business\StoreBusinessController;
 use App\Http\Controllers\Api\ads\Business\UpdateBusinessController;
 use App\Http\Controllers\Api\ads\Digital\DigitalController;
 use App\Http\Controllers\Api\ads\Digital\StoreDigitalController;
@@ -13,15 +14,24 @@ use App\Http\Controllers\Api\ads\Housing\HousingController;
 use App\Http\Controllers\Api\ads\Housing\StoreHousingController;
 use App\Http\Controllers\Api\ads\Housing\UpdateHousingController;
 use App\Http\Controllers\Api\ads\Kitchen\KitchenController;
+use App\Http\Controllers\Api\ads\Kitchen\StoreKitchenController;
 use App\Http\Controllers\Api\ads\Kitchen\UpdateKitchenController;
 use App\Http\Controllers\Api\ads\PersonalAds\PersonalAdController;
 use App\Http\Controllers\Api\ads\PersonalAds\StorePersonalAdController;
 use App\Http\Controllers\Api\ads\PersonalAds\UpdatePersonalController;
+use App\Http\Controllers\Api\ads\Recruitment\RecruitmentController;
+use App\Http\Controllers\Api\ads\Recruitment\StoreRecruitmentController;
 use App\Http\Controllers\Api\ads\Recruitment\UpdateRecruitmentController;
 use App\Http\Controllers\Api\ads\Service\ServiceController;
 use App\Http\Controllers\Api\ads\Service\StoreServicesController;
 use App\Http\Controllers\Api\ads\Service\UpdateServiceController;
+use App\Http\Controllers\Api\ads\Ticket\StoreTicketController;
 use App\Http\Controllers\Api\ads\Ticket\TicketController;
+use App\Http\Controllers\Api\ads\Trip\StoreTripController;
+use App\Http\Controllers\Api\ads\Trip\TripController;
+use App\Http\Controllers\Api\ads\Trip\UpdateTripController;
+use App\Http\Controllers\Api\ads\Vehicle\StoreVehicleController;
+use App\Http\Controllers\Api\ads\Vehicle\UpdateVehicleController;
 use App\Http\Controllers\Api\ads\Vehicle\VehicleController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Auth\GoogleController;
@@ -37,20 +47,17 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/getCountries', [CountryController::class, 'getCountries']);
 Route::get('/info', [ProfileController::class, 'info']);
+Route::get('/currency', [AdsController::class, 'currency']);
 Route::get('/getCategory', [\App\Http\Controllers\Api\CategoryController::class, 'index']);
+Route::get('/getAllCategory', [\App\Http\Controllers\Api\ads\Housing\StoreHousingController::class, 'index2']);
 Route::prefix('auth')->group(function () {
     Route::post('/send-otp', [AuthController::class, 'sendOtp']);          // ارسال کد تایید
     Route::post('/check-user-exists', [AuthController::class, 'checkUserExists']); // بررسی وجود کاربر
     Route::post('/login', [AuthController::class, 'loginOrRegister']);              // ورود
     Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']); // خروج
     Route::post('reset', [AuthController::class, 'resetPasswordWithOtp']);
-
-
 });
-Route::prefix('get-filters')->group(function () {
-    Route::get('/housing', [HousingController::class, 'get_filters']);
-    Route::get('/business', [BusinessController::class, 'get_filters']);
-});
+
 Route::prefix('ads')->controller(AdsController::class)->group(function () {
     Route::get('/',  'index');
     Route::get('/rates',  'rates');
@@ -64,50 +71,62 @@ Route::prefix('ads')->controller(AdsController::class)->group(function () {
     Route::prefix('house')->controller(HousingController::class)->group(function () {
         Route::get('/ ', 'index');
         Route::get('/currency', [AdsController::class, 'rates']);
+        Route::get('/get_filters', 'get_filters')->middleware('optional.auth');
         Route::get('/{id}', 'show');
-
     });
     Route::prefix('housemate')->controller(HousemateController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
+        Route::get('/get_filters', 'get_filters')->middleware('optional.auth');
         Route::get('/{id}', 'show')->middleware('optional.auth');
 
     });
     Route::prefix('digital')->controller(DigitalController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
+        Route::get('/get_filters', 'get_filters')->middleware('optional.auth');
         Route::get('/{id}', 'show')->middleware('optional.auth');
-
     });
+
     Route::prefix('business')->controller(BusinessController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
-        Route::get('/{id}', 'show')->middleware('optional.auth');
+        Route::get('/get_filters', 'get_filters')->middleware('optional.auth');
 
+        Route::get('/{id}', 'show')->middleware('optional.auth');
     });
     Route::prefix('kitchen')->controller(KitchenController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
-        Route::get('/{id}', 'show')->middleware('optional.auth');
 
+        Route::get('/{id}', 'show')->middleware('optional.auth');
     });
     Route::prefix('personal')->controller(PersonalAdController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
         Route::get('/{id}', 'show')->middleware('optional.auth');
-
     });
     Route::prefix('service')->controller(ServiceController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
         Route::get('/{id}', 'show')->middleware('optional.auth');
-
     });
     Route::prefix('vehicle')->controller(VehicleController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
         Route::get('/{id}', 'show')->middleware('optional.auth');
-
     });
     Route::prefix('ticket')->controller(TicketController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
         Route::get('/{id}', 'show')->middleware('optional.auth');
-
     });
-
+    Route::prefix('trip')->controller(TripController::class)->group(function () {
+        Route::get('/currency', [AdsController::class, 'rates']);
+        Route::get('/{id}', 'show')->middleware('optional.auth');
+    });
+    Route::prefix('visa')->controller(\App\Http\Controllers\Api\ads\Visa\VisaController::class)->group(function () {
+        Route::get('/currency', [AdsController::class, 'rates']);
+        Route::get('/{id}', 'show')->middleware('optional.auth');
+    });
+    Route::prefix('recruitment')->controller(RecruitmentController::class)->group(function () {
+        Route::get('/currency', [AdsController::class, 'rates']);
+        Route::get('/resume', 'resume')->middleware('optional.auth');
+        Route::get('/resume/pdf', 'downloadPdf')->middleware('optional.auth');
+        Route::get('/{id}', 'show')->middleware('optional.auth');
+    });
 
 
 });
@@ -165,6 +184,15 @@ Route::prefix('update')->group(function () {
         Route::post('/fifth/{id}',  'fifth');
         Route::post('/sixth/{id}',  'sixth');
     });
+    Route::prefix('ticket')->controller(\App\Http\Controllers\Api\ads\Ticket\UpdateTicketController::class)->group(function () {
+        Route::get('/{id}',  'get');
+        Route::post('/first/{id}',  'first');
+        Route::post('/second/{id}',  'second');
+        Route::post('/third/{id}',  'third');
+        Route::post('/fourth/{id}',  'fourth');
+        Route::post('/fifth/{id}',  'fifth');
+        Route::post('/sixth/{id}',  'sixth');
+    });
     Route::prefix('personal')->controller(UpdatePersonalController::class)->group(function () {
         Route::get('/{id}',  'get');
         Route::post('/first/{id}',  'first');
@@ -184,7 +212,20 @@ Route::prefix('update')->group(function () {
         Route::post('/sixth/{id}',  'sixth');
         Route::post('/seventh/{id}',  'seventh');
     });
-    Route::prefix('service')->controller(UpdateServiceController::class)->group(function () {
+    Route::prefix('vehicles')->controller(UpdateVehicleController::class)->group(function () {
+        Route::get('/{id}',  'get');
+        Route::post('/first/{id}',  'first');
+        Route::post('/second/{id}',  'second');
+        Route::post('/third/{id}',  'third');
+        Route::post('/fourth/{id}',  'fourth');
+        Route::post('/fifth/{id}',  'fifth');
+        Route::post('/sixth/{id}',  'sixth');
+        Route::post('/seventh/{id}',  'seventh');
+    });
+    Route::prefix('trip')->controller(UpdateTripController::class)->group(function () {
+        Route::post('/first',  'first');
+    });
+    Route::prefix('services')->controller(UpdateServiceController::class)->group(function () {
         Route::get('/{id}',  'get');
         Route::post('/first/{id}',  'first');
         Route::post('/second/{id}',  'second');
@@ -207,7 +248,7 @@ Route::prefix('store')->middleware('auth:sanctum')->group(function () {
         Route::delete('/delete/{id}',  'delete');
 
     });
-    Route::prefix('kitchen')->controller(\App\Http\Controllers\Api\ads\Kitchen\StoreKitchenController::class)->group(function () {
+    Route::prefix('kitchen')->controller(StoreKitchenController::class)->group(function () {
         Route::get('/',  'index');
 
         Route::post('/first',  'first');
@@ -260,9 +301,12 @@ Route::prefix('store')->middleware('auth:sanctum')->group(function () {
         Route::post('/sixth',  'sixth');
         Route::delete('/delete/{id}',  'delete');
     });
+    Route::prefix('trip')->controller(StoreTripController::class)->group(function () {
+        Route::post('/first',  'first');
+        Route::post('/second',  'second');
+    });
 
-
-    Route::prefix('vehicle')->controller(\App\Http\Controllers\Api\ads\Vehicle\StoreVehicleController::class)->group(function () {
+    Route::prefix('vehicle')->controller(StoreVehicleController::class)->group(function () {
         Route::get('/',  'index');
         Route::post('/first',  'first');
         Route::post('/second',  'second');
@@ -272,7 +316,7 @@ Route::prefix('store')->middleware('auth:sanctum')->group(function () {
         Route::post('/sixth',  'sixth');
         Route::delete('/delete/{id}',  'delete');
     });
-    Route::prefix('recruitment')->controller(\App\Http\Controllers\Api\ads\Recruitment\StoreRecruitmentController::class)->group(function () {
+    Route::prefix('recruitment')->controller(StoreRecruitmentController::class)->group(function () {
         Route::get('/',  'index');
         Route::post('/first',  'first');
         Route::post('/second',  'second');
@@ -282,7 +326,15 @@ Route::prefix('store')->middleware('auth:sanctum')->group(function () {
         Route::post('/sixth',  'sixth');
         Route::post('/seventh',  'seventh');
     });
-    Route::prefix('ticket')->controller(\App\Http\Controllers\Api\ads\Ticket\StoreTicketController::class)->group(function () {
+    Route::prefix('visa')->controller(\App\Http\Controllers\Api\ads\Visa\StoreVisaController::class)->group(function () {
+        Route::get('/',  'index');
+        Route::post('/first',  'first');
+        Route::post('/third',  'third');
+        Route::post('/fourth',  'fourth');
+        Route::post('/fifth',  'fifth');
+        Route::post('/sixth',  'sixth');
+    });
+    Route::prefix('ticket')->controller(StoreTicketController::class)->group(function () {
         Route::get('/',  'index');
         Route::post('/first',  'first');
         Route::post('/second',  'second');
@@ -292,7 +344,7 @@ Route::prefix('store')->middleware('auth:sanctum')->group(function () {
         Route::post('/sixth',  'sixth');
         Route::delete('/delete/{id}',  'delete');
     });
-    Route::prefix('business')->controller(\App\Http\Controllers\Api\ads\Business\StoreBusinessController::class)->group(function () {
+    Route::prefix('business')->controller(StoreBusinessController::class)->group(function () {
         Route::post('/first',  'first');
         Route::post('/second',  'second');
         Route::post('/third',  'third');
@@ -312,6 +364,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/finances',  'storeFinance');
         Route::put('/finances/{id}',  'updateFinance');
         Route::delete('/finances/{id}',  'destroyFinance');
+
+
+        Route::get('/DigitalCurrency',  'DigitalCurrency');
+        Route::post('/DigitalCurrency',  'storeDigitalCurrency');
+        Route::delete('/DigitalCurrency/{id}',  'destroyDigitalCurrency');
 
         Route::prefix('request')->controller(\App\Http\Controllers\Api\Profile\ChatController::class)->group(function () {
             Route::get('/',  'myAds');
@@ -367,7 +424,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/ad/extension/{id}',  [MyAdsController::class, 'extension']);
     Route::post('/ad/sold/{id}',  [MyAdsController::class, 'sold']);
 
-    Route::prefix('profile/ticket')->controller(TicketController::class)->group(function () {
+    Route::prefix('profile/ticket')->controller(\App\Http\Controllers\Api\Profile\TicketController::class)->group(function () {
         Route::get('/',  'userTickets');
         Route::get('/{id}',  'show');
         Route::post('/store',  'store');

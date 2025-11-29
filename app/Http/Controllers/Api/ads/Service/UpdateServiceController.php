@@ -9,6 +9,7 @@ use App\Models\AdImage;
 use App\Models\BusinessAd;
 use App\Models\Digital\DigitalAd;
 use App\Models\Kitchen\KitchenAd;
+use App\Models\ServicesAd;
 use Illuminate\Http\Request;
 
 class UpdateServiceController extends Controller
@@ -24,6 +25,8 @@ class UpdateServiceController extends Controller
                 'category_id' => $ad->category_id,
                 'type' => $ad->type,
                 'title' => $ad->title,
+                'service_expertise_id' => $ad->serviceAds->service_expertise_id,
+
             ],
             'second' => [
                 'country_id'  => $ad->address?->country?->id,
@@ -35,23 +38,23 @@ class UpdateServiceController extends Controller
 
             ],
             'third' => [
-                'phone_case' => $ad->personalAd->condition,
-                'text' => $ad->personalAd->text,
+                'time' => $ad->serviceAds->time,
+                'text' => $ad->serviceAds->text,
             ],
             'fourth' =>$ad->images,
             'fifth' => [
-                'site_massage' => $ad->personalAd->site_massage,
-                'my_phone' => $ad->personalAd->my_phone,
-                'other_phone' => $ad->personalAd->other_phone,
-                'other_phone_number' => $ad->personalAd->other_phone_number,
+                'site_massage' => $ad->serviceAds->site_massage,
+                'my_phone' => $ad->serviceAds->my_phone,
+                'other_phone' => $ad->serviceAds->other_phone,
+                'other_phone_number' => $ad->serviceAds->other_phone_number,
             ],
             'sixth' => [
-                'currencies_id' =>$ad->personalAd?->currency?->title,
-                'price' => $ad->personalAd->price,
-                'donation' => $ad->personalAd->donation,
-                'cash' => $ad->personalAd->cash,
-                'installments' => $ad->personalAd->installments,
-                'check' => $ad->personalAd->check,
+                'currencies_id' =>$ad->serviceAds?->currency?->title,
+                'price' => $ad->serviceAds->price,
+                'donation' => $ad->serviceAds->donation,
+                'cash' => $ad->serviceAds->cash,
+                'installments' => $ad->serviceAds->installments,
+                'check' => $ad->serviceAds->check,
             ],
         ];
         return api_response($return);
@@ -59,12 +62,13 @@ class UpdateServiceController extends Controller
 
     }
 
+
     public function first(Request $request, $id)
     {
         $request->validate([
             'title' => 'required',
-            'kitchen_brand_id' => 'required',
-            'kitchen_type_id' => 'required',
+            'service_expertise_id' => 'required',
+
         ]);
 
         $ad = Ad::findOrFail($id);
@@ -73,18 +77,18 @@ class UpdateServiceController extends Controller
             'title'       => $request->title,
         ]);
 
-        $KitchenAd = KitchenAd::where('ad_id', $ad->id)->first();
+        $KitchenAd = ServicesAd::where('ad_id', $ad->id)->first();
         if ($KitchenAd) {
             $KitchenAd->update([
-                'kitchen_brand_id' => $request->kitchen_brand_id,
-                'kitchen_type_id' => $request->kitchen_type_id,
+                'service_expertise_id' => $request->service_expertise_id,
+
 
             ]);
         } else {
-            KitchenAd::create([
+            ServicesAd::create([
                 'ad_id' => $ad->id,
-                'kitchen_brand_id' => $request->kitchen_brand_id,
-                'kitchen_type_id' => $request->kitchen_type_id,
+                'service_expertise_id' => $request->service_expertise_id,
+
             ]);
         }
 
@@ -123,7 +127,7 @@ class UpdateServiceController extends Controller
 
         $ad = Ad::findOrFail($id);
 
-        $ad->kitchenAds()->update([
+        $ad->serviceAds()->update([
             'condition' => $request->condition,
             'text' => $request->text,
         ]);
@@ -175,7 +179,7 @@ class UpdateServiceController extends Controller
 
         $ad = Ad::findOrFail($id);
 
-        $ad->digitalAd()->update([
+        $ad->serviceAds()->update([
             'site_massage' => $request->site_massage,
             'my_phone' => $request->my_phone,
             'other_phone' => $request->other_phone,
@@ -197,7 +201,7 @@ class UpdateServiceController extends Controller
 
         $ad = Ad::findOrFail($id);
 
-        $ad->digitalAd()->update([
+        $ad->serviceAds()->update([
             'currencies_id' => $request->currencies_id,
             'price' => $request->price,
             'donation' => $request->donation,

@@ -33,7 +33,7 @@ class MyAdsController extends Controller
             return [
                 'id' => $item->id,
                 'user_id' => auth()->id(),
-                'title' => $item->title,س
+                'title' => $item->title,
                 'slug' => $item->root_category_title,
                 'custom_info' => $item->custom_info,
                 'image' => $item->image,

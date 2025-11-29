@@ -165,6 +165,11 @@ class Ad extends Model
     {
         return $this->hasOne(Vehicle::class);
     }
+    public function visa()
+    {
+        return $this->hasOne(Visa::class);
+    }
+
 
     public function recruitmentAd()
     {
@@ -180,6 +185,10 @@ class Ad extends Model
     public function kitchenAds()
     {
         return $this->hasOne(KitchenAd::class);
+    }
+    public function trip()
+    {
+        return $this->hasOne(Trip::class);
     }
 
     public function serviceAds()
@@ -268,20 +277,23 @@ class Ad extends Model
     /////// filtes
     public function scopeFilterCommon($query, $request)
     {
-        $query->when($request->category_id ?? $request->category_slug, function ($q) use ($request) {
-            $category = null;
-
-            if ($request->category_id) {
-                $category = Category::with('children')->find($request->category_id);
-            } elseif ($request->category_slug) {
-                $category = Category::with('children')->where('slug', $request->category_slug)->first();
-            }
-
+        $query->when($request->category_id, function ($q) use ($request) {
+            $category = Category::with('children')->find($request->category_id);
             if ($category) {
                 $ids = $category->getAllIds()->toArray();
                 $q->whereIn('category_id', $ids);
             }
         });
+
+
+        $query->when($request->category_slug, function ($q) use ($request) {
+            $category = Category::with('children')->where('slug', $request->category_slug)->first();
+            if ($category) {
+                $ids = $category->getAllIds()->toArray();
+                $q->whereIn('category_id', $ids);
+            }
+        });
+
 
 
         $query->when($request->country_id, function ($q) use ($request) {

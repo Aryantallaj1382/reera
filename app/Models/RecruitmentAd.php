@@ -35,12 +35,7 @@ class RecruitmentAd extends Model
         'details' => 'array',
         'skill'   => 'array',
         'role'    => 'array',
-        'site_massage' => 'boolean',
-        'my_phone'     => 'boolean',
-        'other_phone'  => 'boolean',
-        'cash'         => 'boolean',
-        'installments' => 'boolean',
-        'check'        => 'boolean',
+
     ];
 
     // روابط
@@ -49,21 +44,33 @@ class RecruitmentAd extends Model
     {
         return $this->belongsTo(Ad::class);
     }
+    public function category()
+    {
+        return $this->belongsTo(RecruitmentCategory::class, 'recruitment_categories_id');
+    }
+    public function currency()
+    {
+        return $this->belongsTo(Currency::class, 'currencies_id');
+    }
+    public function getMobileAttribute()
+    {
+        if ($this->my_phone == true) {
+            return $this->ad->user->mobile;
+        } elseif ($this->other_phone == true) {
+            return $this->other_phone_number;
 
+        }
+        return null;
+
+    }
     public function language()
     {
         return $this->belongsTo(Language::class, 'languages_id');
     }
 
-    public function category()
-    {
-        return $this->belongsTo(RecruitmentCategory::class, 'recruitment_categories_id');
-    }
 
-    public function currency()
-    {
-        return $this->belongsTo(Currency::class, 'currencies_id');
-    }
+
+
 
     public function getPlanTypeNameAttribute()
     {

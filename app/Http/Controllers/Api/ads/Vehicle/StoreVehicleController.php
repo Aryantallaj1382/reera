@@ -103,6 +103,7 @@ class StoreVehicleController extends Controller
             'ad_id' => 'required|integer|exists:ads,id',
             'motor' => 'nullable',
             'chassis_status' => 'nullable',
+            'fuel_type' => 'nullable',
             'body' => 'nullable',
             'text' => 'nullable',
 
@@ -113,8 +114,8 @@ class StoreVehicleController extends Controller
             'motor' => $request->motor,
             'chassis_status' => $request->chassis_status,
             'body' => $request->body,
+            'fuel_type' => $request->fuel_type,
             'text' => $request->text,
-
 
         ]);
         return api_response([], __('messages.saved_successfully'));
@@ -177,14 +178,14 @@ class StoreVehicleController extends Controller
             'ad_id' => 'required|integer|exists:ads,id',
             'currencies_id' =>'required',
             'price' => 'required|numeric|min:0',
-            'donation' => 'required|numeric|min:0',
+            'donation' => 'nullable|numeric',
             'cash' => 'nullable',
             'installments' => 'nullable',
             'check' => 'nullable',
         ]);
 
         $ad = Ad::find($request->ad_id);
-        $ad->housingAds()->update([
+        $ad->vehiclesAds()->update([
             'currencies_id' => $request->currencies_id,
             'price' => $request->price,
             'donation' => $request->donation,

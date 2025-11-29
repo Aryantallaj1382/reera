@@ -29,6 +29,7 @@ class StoreServicesController extends Controller
                 'currency' => $c,
                 'type' => $a
             ]
+
         );
     }
     public function first(Request $request)
@@ -97,7 +98,7 @@ class StoreServicesController extends Controller
 
         $ad = Ad::find($request->ad_id);
         $ad->serviceAds()->update([
-            'time' => $request->condition,
+            'time' => $request->time,
             'text' => $request->text,
 
         ]);
@@ -163,7 +164,7 @@ class StoreServicesController extends Controller
             'ad_id' => 'required|integer|exists:ads,id',
             'currencies_id' =>'required',
             'price' => 'required|numeric|min:0',
-            'donation' => 'required|numeric|min:0',
+            'donation' => 'nullable|numeric',
             'cash' => 'nullable',
             'installments' => 'nullable',
             'check' => 'nullable',
@@ -173,7 +174,7 @@ class StoreServicesController extends Controller
         $ad->serviceAds()->update([
             'currencies_id' => $request->currencies_id,
             'price' => $request->price,
-            'donation' => $request->donation,
+            'donation' => $request->donation ?? null,
             'cash' => $request->cash,
             'installments' => $request->installments,
             'check' => $request->check,

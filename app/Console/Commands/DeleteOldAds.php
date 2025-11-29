@@ -13,7 +13,7 @@ class DeleteOldAds extends Command
     public function handle()
     {
         $count = Ad::where('is_finish', 0)
-            ->where('created_at', '<', now()->subMinutes(7))
+            ->where('created_at', '<', now()->subMinutes(20))
             ->delete();
 
         $this->info("{$count} آگهی قدیمی حذف شد.");

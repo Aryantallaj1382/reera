@@ -16,8 +16,6 @@ class HousingController extends Controller
         $query = Ad::with(['housingAds', 'category', 'address']);
 
         $this->applyFilters($request, $query);
-
-        // مرتب‌سازی
         if ($request->filled('sort_by')) {
             switch ($request->sort_by) {
                 case 'newest':
@@ -70,8 +68,9 @@ class HousingController extends Controller
             'address' => getAddress($ad->id),
             'seller' => getSeller($ad->id),
             'category' => $ad->category->title,
-            'category_parent' => $ad-> rootC_category_title,
+            'category_parent' => $ad->root_category_title,
             'price' => $ad->housingAds->price,
+            'is_house' => true,
             'donation' => $ad->housingAds->donation,
             'currency_code' => $ad->housingAds?->currency?->code,
             'currency' => $ad->housingAds->currency?->title,
@@ -147,6 +146,8 @@ class HousingController extends Controller
             return [
                 'id' => $child->id,
                 'category' => $child->title,
+                'title_en' => $child->title_en,
+
             ];
         });
         $extraChildren = [];

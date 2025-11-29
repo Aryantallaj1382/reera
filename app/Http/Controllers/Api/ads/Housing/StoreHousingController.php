@@ -14,24 +14,51 @@ use Illuminate\Support\Facades\Storage;
 
 class StoreHousingController extends Controller
 {
+    public function index2(Request $request)
+    {
+        $categories = Category::with('children.children')->whereNull('parent_id')->get();
+        $lag = $request->input('language' ,'fa');
+        $format = function ($cat, $lag, $format) {
+            return [
+                'id' => $cat->id,
+                'title' => $lag ? $cat->title : $cat->title_en,
+                'slug' => $cat->slug,
+                'children' => $cat->children->map(function ($child) use ($format, $lag) {
+                    return $format($child, $lag, $format);
+                }),
+            ];
+        };
+
+        $result = $categories->map(function ($category) use ($format, $lag) {
+            return $format($category, $lag, $format);
+        });
+
+
+        return api_response(
+            [
+                'categories' => $result,
+            ]
+        );
+    }
     public function index(Request $request)
     {
         $categories = Category::with('children.children')->whereNull('parent_id')->get();
+        $lag = $request->input('language' ,'fa');
+        $format = function ($cat, $lag, $format) {
+            return [
+                'id' => $cat->id,
+                'title' => $lag ? $cat->title : $cat->title_en,
+                'slug' => $cat->slug,
+                'children' => $cat->children->map(function ($child) use ($format, $lag) {
+                    return $format($child, $lag, $format);
+                }),
+            ];
+        };
 
-        $result = $categories->map(function ($category) {
-            $format = function ($cat) use (&$format) {
-                return [
-                    'id' => $cat->id,
-                    'title' => $cat->title,
-                    'slug' => $cat->slug,
-                    'children' => $cat->children->map(function ($child) use (&$format) {
-                        return $format($child);
-                    }),
-                ];
-            };
-
-            return $format($category);
+        $result = $categories->map(function ($category) use ($format, $lag) {
+            return $format($category, $lag, $format);
         });
+
 
         $c = Currency::select('id', 'title', 'code')->get();
 

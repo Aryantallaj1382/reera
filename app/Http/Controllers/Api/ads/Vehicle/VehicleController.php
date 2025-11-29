@@ -29,6 +29,7 @@ class VehicleController
             'gearbox' => $ad->vehiclesAds->gearbox,
             'color' => $ad->vehiclesAds->color,
             'chassis_status' => $ad->vehiclesAds->chassis_status,
+            'fuel_type' => $ad->vehiclesAds->fuel_type,
             'motor' => $ad->vehiclesAds->motor,
             'body' => $ad->vehiclesAds->body,
             'date_model' => $ad->vehiclesAds->date_model,

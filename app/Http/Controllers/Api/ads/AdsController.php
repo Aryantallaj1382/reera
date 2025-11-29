@@ -170,4 +170,10 @@ class AdsController extends Controller
         return api_response([], 'درخواست ثبت شد');
 
     }
+    public function currency()
+    {
+        $currency = Currency::all();
+        return api_response($currency);
+
+    }
 }

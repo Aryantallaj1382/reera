@@ -26,8 +26,8 @@ class UpdateHousingController extends Controller
                 'title' => $ad->title,
                 'area' => $ad->housingAds->area,
                 'year' => $ad->housingAds->year,
-                'number_of_bedrooms' => $ad->housingAds->number_of_bedrooms,
-                'number_of_bathroom' => $ad->housingAds->number_of_bathroom,
+                'number_of_bedrooms' =>(string) $ad->housingAds->number_of_bedrooms,
+                'number_of_bathroom' =>(string) $ad->housingAds->number_of_bathroom,
             ],
             'second' => [
                 'country_id'  => $ad->address?->country?->id,

@@ -55,15 +55,12 @@ class DigitalController extends Controller
 
     public function show($id)
     {
-
         $ad = Ad::with('digitalAd')->find($id);
-
         if(!$ad->digitalAd)
         {
             return api_response([], 'wrong id');
         }
         $return =[
-
             'id' => $ad->id,
             'title' => $ad->title,
             'slug' => $ad->slug,
@@ -99,31 +96,25 @@ class DigitalController extends Controller
                 'my_phone' => $ad->digitalAd->my_phone,
                 'mobile' => $ad->digitalAd->mobile,
             ],
-
-
-
         ];
         return api_response($return);
-
     }
-
     public function get_filters(Request $request)
     {
-        $mainCategory = Category::where('id', 1)->with('children')->first();
-
+         $mainCategory = Category::where('slug', 'Digital')->with('children')->first();
         if (!$mainCategory) {
             return api_response([], 'دسته‌بندی اصلی پیدا نشد', false);
         }
-        $mainChildren = $mainCategory->children->map(function ($child) {
+        $mainChildren = $mainCategory->children->map(function ($child)  {
             return [
                 'id' => $child->id,
                 'category' => $child->title,
+                'title_en' => $child->title_en,
             ];
         });
         $extraChildren = [];
-        if ($request->filled('category_id')) {
+            if ($request->filled('category_id')) {
             $selectedCategory = Category::where('id', $request->category_id)->with('children')->first();
-
             if ($selectedCategory) {
                 $extraChildren = $selectedCategory->children->map(function ($child) {
                     return [
@@ -133,10 +124,8 @@ class DigitalController extends Controller
                 });
             }
         }
-
         $minPrice = DigitalAd::min('price');
         $maxPrice = DigitalAd::max('price');
-
         $lang = Ad::where('category_id', 2)->with('address')->get();
         $a = $lang->filter(fn($item) => $item->address)->map(function ($item) {
             return [

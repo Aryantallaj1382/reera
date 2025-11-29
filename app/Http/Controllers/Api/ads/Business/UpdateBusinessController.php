@@ -34,7 +34,7 @@ class UpdateBusinessController extends Controller
 
             ],
             'third' => [
-                'description' => $ad->businessAd->text,
+                'text' => $ad->businessAd->text,
             ],
             'fourth' =>$ad->images,
             'fifth' => [
@@ -110,13 +110,13 @@ class UpdateBusinessController extends Controller
     public function third(Request $request , $id)
     {
         $request->validate([
-            'description' => 'nullable',
+            'text' => 'nullable',
         ]);
 
         $ad = Ad::findOrFail($id);
 
         $ad->businessAd()->update([
-            'text' => $request->description,
+            'text' => $request->text,
         ]);
 
         return api_response([], __('messages.saved_successfully'));

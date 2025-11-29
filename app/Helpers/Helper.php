@@ -237,7 +237,7 @@ function convert($amount, $from = 'USD', $to = 'IRT')
             $inToman = $amount;
             break;
 
-        case 'IRR': // ریال
+        case 'IRR':
             $inToman = $amount / 10;
             break;
 

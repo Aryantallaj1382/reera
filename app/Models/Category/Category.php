@@ -9,7 +9,7 @@ class Category extends Model
 {
     public $incrementing = false; // چون id ثابت داریم (غیر auto-increment)
 
-    protected $fillable = ['id', 'parent_id', 'title', 'slug', 'icon'];
+    protected $fillable = ['id', 'parent_id', 'title', 'slug', 'icon', 'title_en'];
 
     public function parent()
     {
