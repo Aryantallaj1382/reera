@@ -3,11 +3,67 @@
 namespace App\Http\Controllers\Api\ads\Recruitment;
 
 use App\Models\Ad;
+use App\Models\Category\Category;
+use App\Models\Language;
+use App\Models\RecruitmentAd;
+use App\Models\RecruitmentCategory;
 use App\Models\User;
+use App\Models\VisaType;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 
 class RecruitmentController
 {
+    public function get_filters(Request $request)
+    {
+        $mainCategory = Category::where('slug', 'visa')->with('children')->first();
+        if (!$mainCategory) {
+            return api_response([], 'دسته‌بندی اصلی پیدا نشد', false);
+        }
+        $mainChildren = $mainCategory->children->map(function ($child) {
+            return [
+                'id' => $child->id,
+                'category' => $child->title,
+            ];
+        });
+        $extraChildren = [];
+        if ($request->filled('category_id')) {
+            $selectedCategory = Category::where('id', $request->category_id)->with('children')->first();
+
+            if ($selectedCategory) {
+                $extraChildren = $selectedCategory->children->map(function ($child) {
+                    return [
+                        'id' => $child->id,
+                        'category' => $child->title,
+                    ];
+                });
+            }
+        }
+
+        $lang = Ad::whereRelation('category', 'slug', 'visa')->with('address')->get();
+        $loc = $lang->filter(fn($item) => $item->address)->map(function ($item) {
+            return [
+                'latitude' => $item->address->latitude,
+                'longitude' => $item->address->longitude,
+            ];
+        })->values();
+
+        $a = RecruitmentCategory::all();
+        $l = Language::all();
+        $minPrice = RecruitmentAd::min('price');
+        $maxPrice = RecruitmentAd::max('price');
+
+        return api_response([
+            'main_category' => $mainChildren,
+            'selected_category' => $extraChildren,
+            'category' => $a,
+            'language' => $l,
+            'min_price' => $minPrice,
+            'max_price' => $maxPrice,
+            'loc' =>$loc
+        ]);
+    }
+
     public function show($id)
     {
 
@@ -17,12 +73,15 @@ class RecruitmentController
             return api_response([], 'wrong id');
         }
         if (auth()->user()) {
-            $resume_file = auth()->user()->info->resume_file;
+            $resume_file = auth()->user()?->info?->resume_file;
             $ResumeCompletion = auth()->user()->resume_completion;
         }
 
         $return = [
             'id' => $ad->id,
+            'is_like' => $ad->is_like,
+            'user_id' => $ad->user_id,
+
             'title' => $ad->title,
             'slug' => $ad->slug,
             'image' => getImages($ad->id),

@@ -25,18 +25,21 @@ class ProfileController extends Controller
     public function profile(Request $request)
     {
         $user = auth()->user();
-
         return api_response([
             'profile' => $user->profile,
             'first_name' => $user->first_name,
             'last_name' => $user->last_name,
             'mobile' => $user->mobile,
             'national_code' => $user->national_code,
-            'identity_document' => $user->identity_document,
+            'identity_document' => $user->identity_document ? url('public/'.$user->identity_document) : null,
             'language' => $user->language->title ?? null,
+            'language_id' => $user->language->id ?? null,
             'nationality' => $user->nationality->title ?? null,
+            'nationality_id' => $user->nationality->id ?? null,
         ]);
     }
+
+
 
     public function updateProfile(Request $request)
     {
@@ -54,19 +57,31 @@ class ProfileController extends Controller
         ]);
 
         if ($request->hasFile('profile')) {
-            if ($user->profile) {
-                Storage::delete($user->profile);
+            if ($user->profile && file_exists(public_path($user->profile))) {
+                unlink(public_path($user->profile));
             }
 
-            $validated['profile'] = $request->file('profile')->store('users/profile');
+            $file = $request->file('profile');
+            $name = time() . '_' . $file->getClientOriginalName();
+
+            $file->move(public_path('users/profile'), $name);
+
+            $validated['profile'] = 'users/profile/' . $name;
         }
 
         if ($request->hasFile('identity_document')) {
-            if ($user->identity_document) {
-                Storage::delete($user->identity_document);
+            if ($user->identity_document && file_exists(public_path($user->identity_document))) {
+                unlink(public_path($user->identity_document));
             }
 
-            $validated['identity_document'] = $request->file('identity_document')->store('users/documents');
+            $file = $request->file('identity_document');
+            $name = time() . '_' . $file->getClientOriginalName();
+
+            // انتقال فایل به پوشه public
+            $file->move(public_path('users/documents'), $name);
+
+            // مسیر ذخیره در دیتابیس
+            $validated['identity_document'] = 'users/documents/' . $name;
         }
 
         $user->update($validated);
@@ -314,6 +329,7 @@ class ProfileController extends Controller
     }
 
 
+
     public function getResidencyStatus(Request $request)
     {
         $user = $request->user();
@@ -359,18 +375,14 @@ class ProfileController extends Controller
 
     public function getSalaryRange(Request $request)
     {
-        $user = $request->user();
-        $info = $user->info;
+        $user = auth()->user();
+        $info = $user->info ?? null;
 
-        if (!$info) {
-            return api_response([
-                'message' => 'اطلاعات کاربر یافت نشد.'
-            ], 404);
-        }
+
 
         return api_response([
-            'min_salary' => $info->min_salary,
-            'max_salary' => $info->max_salary,
+            'min_salary' => $info->min_salary ?? 0,
+            'max_salary' => $info->max_salary?? 0,
         ]);
     }
 
@@ -452,9 +464,9 @@ class ProfileController extends Controller
             'work_experiences.*.title' => 'required|string|max:255',
             'work_experiences.*.company_name' => 'required|string|max:255',
             'work_experiences.*.start_month' => 'required|integer|between:1,12',
-            'work_experiences.*.start_year' => 'required|integer|min:1900',
+            'work_experiences.*.start_year' => 'required|integer',
             'work_experiences.*.end_month' => 'nullable|integer|between:1,12',
-            'work_experiences.*.end_year' => 'nullable|integer|min:1900',
+            'work_experiences.*.end_year' => 'nullable|integer',
             'work_experiences.*.is_current' => 'required|boolean',
             'work_experiences.*.description' => 'nullable|string',
         ]);
@@ -489,8 +501,8 @@ class ProfileController extends Controller
             'educations.*.major' => 'required|string|max:255',
             'educations.*.university_name' => 'required|string|max:255',
             'educations.*.degree' => 'nullable|in:diploma,associate,bachelor,master,phd',
-            'educations.*.start_year' => 'required|integer|min:1900',
-            'educations.*.end_year' => 'nullable|integer|min:1900',
+            'educations.*.start_year' => 'required|integer',
+            'educations.*.end_year' => 'nullable|integer',
             'educations.*.is_current' => 'required|boolean',
             'educations.*.description' => 'nullable|string',
         ]);

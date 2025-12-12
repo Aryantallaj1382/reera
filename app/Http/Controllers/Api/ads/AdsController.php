@@ -9,8 +9,11 @@ use App\Models\AdReport;
 use App\Models\Category\Category;
 use App\Models\Chat;
 use App\Models\City;
+use App\Models\Comment;
 use App\Models\Country;
 use App\Models\Currency;
+use App\Models\Kitchen\KitchenBrand;
+use App\Models\Kitchen\KitchenType;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -18,6 +21,8 @@ use Illuminate\Support\Facades\Storage;
 
 class AdsController extends Controller
 {
+
+
     public function index(Request $request)
     {
         $query = Ad::query();
@@ -25,13 +30,37 @@ class AdsController extends Controller
         $query->filterCommon($request);
         if ($request->category_slug == 'housing') {
             $query->filterHousing($request);
-        } elseif ($request->category_slug == 'vehicles') {
+        }
+        elseif ($request->category_slug == 'vehicles') {
             $query->vehicles($request);
         }
         elseif ($request->category_slug == 'digital') {
             $query->digital($request);
         }
-
+        elseif ($request->category_slug == 'recruitment') {
+            $query->recruitment($request);
+        }
+        elseif ($request->category_slug == 'kitchen') {
+            $query->kitchen($request);
+        }
+        elseif ($request->category_slug == 'ticket') {
+            $query->ticket($request);
+        }
+        elseif ($request->category_slug == 'business') {
+            $query->business($request);
+        }
+        elseif ($request->category_slug == 'personal') {
+            $query->personal($request);
+        }
+        elseif ($request->category_slug == 'visa') {
+            $query->visa($request);
+        }
+        elseif ($request->category_slug == 'trip') {
+            $query->trip($request);
+        }
+        elseif ($request->category_slug == 'housemate') {
+            $query->housemate($request);
+        }
         $ads = $query->latest()->paginate();
 
         $ads->getCollection()->transform(function ($ad) {
@@ -46,6 +75,7 @@ class AdsController extends Controller
                 'custom_info' => $ad->custom_info,
                 'root_category_slug' => $ad->root_category_slug,
                 'price' => $ad->price,
+                'currency' => $ad?->currency?->title,
             ];
         });
 
@@ -111,13 +141,13 @@ class AdsController extends Controller
         return api_response($a);
 
     }
-    public function store(Request $request, $adId)
+    public function store(Request $request, $id)
     {
         $request->validate([
             'reason' => 'nullable|string|max:191',
         ]);
 
-        $ad = Ad::findOrFail($adId);
+        $ad = Ad::findOrFail($id);
 
         AdReport::create([
             'reporter_id' => auth()->id(),
@@ -175,5 +205,58 @@ class AdsController extends Controller
         $currency = Currency::all();
         return api_response($currency);
 
+    }
+
+
+    /**
+     * نمایش کامنت‌های تایید شده یک آگهی (Ad) به همراه ریپلای‌ها
+     *
+     * @param int $adId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function comments($id)
+    {
+        // اگر مدل Ad داری، می‌تونی اول چک کنی وجود داره یا نه
+        $ad = Ad::findOrFail($id);
+
+        $comments = Comment::where('commentable_type', \App\Models\Ad::class)
+            ->where('commentable_id', $id)
+            ->where('status', 'approved')
+            ->withCount('likes') // تعداد لایک‌ها
+            ->with(['likes' => function ($query) {
+                if (auth()->check()) {
+                    $query->where('user_id', auth()->id());
+                }
+            }])
+            ->orderBy('created_at', 'desc')
+            ->paginate();
+
+        $comments->getCollection()->transform(function ($comment) {
+                return [
+                    'id' => $comment->id,
+                    'body' => $comment->body,
+                    'user' => [
+                        'name' => $comment->user->name,
+                        'profile' => $comment->user->profile ? asset($comment->user->profile) : asset('default-avatar.png'),
+                    ],
+                    'created_at' => $comment->created_at->diffForHumans(), // مثلاً "2 ساعت پیش"
+                    'average_rating' => $comment->average_rating,
+                    'likes_count' => $comment->likes_count,
+                    'is_liked' => $comment->likes->isNotEmpty(), // آیا کاربر فعلی لایک کرده
+                    'replies' => $comment->replies->map(function ($reply) {
+                        return [
+                            'id' => $reply->id,
+                            'body' => $reply->body,
+                            'user' => [
+                                'name' => $reply->user->name,
+                                'profile' => $reply->user->profile ? asset($reply->user->profile) : asset('default-avatar.png'),
+                            ],
+                            'created_at' => $reply->created_at->diffForHumans(),
+                        ];
+                    }),
+                ];
+            });
+
+        return api_response($comments);
     }
 }

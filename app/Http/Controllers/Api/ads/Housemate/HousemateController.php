@@ -26,6 +26,8 @@ class HousemateController
             'id' => $ad->id,
             'title' => $ad->title,
             'slug' => $ad->slug,
+            'user_id' => $ad->user_id,
+
             'image' => getImages($ad->id),
             'address' => getAddress($ad->id),
             'seller' => getSeller($ad->id),
@@ -41,6 +43,8 @@ class HousemateController
             'number_of_bedrooms' => $ad->housemate->number_of_bedrooms,
             'location' => $ad->location,
             'time' => $ad->time_ago,
+            'is_like' => $ad->is_like,
+
             'membership' => $ad->user->membership_duration,
             'year' => $ad->housemate->year,
             'text' => $ad->housemate->text,
@@ -87,7 +91,7 @@ class HousemateController
 
     public function get_filters(Request $request)
     {
-        $mainCategory = Category::where('slug', 'housing')->with('children')->first();
+        $mainCategory = Category::where('slug', 'housemate')->with('children')->first();
         if (!$mainCategory) {
             return api_response([], 'دسته‌بندی اصلی پیدا نشد', false);
         }
@@ -122,7 +126,7 @@ class HousemateController
         $minArea = HousingAds::min('area');
         $maxArea = HousingAds::max('area');
 
-        $lang = Ad::where('category_id', 1)->with('address')->get();
+        $lang = Ad::whereRelation('category', 'slug', 'housemate')->with('address')->get();
         $a = $lang->filter(fn($item) => $item->address)->map(function ($item) {
             return [
                 'latitude' => $item->address->latitude,

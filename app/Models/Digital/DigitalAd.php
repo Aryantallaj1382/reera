@@ -10,6 +10,9 @@ class DigitalAd extends Model
 {
     protected $guarded =[];
 
+    protected $casts = [
+        'price' => 'integer',
+    ];
     // ارتباط با آگهی اصلی
     public function ad()
     {

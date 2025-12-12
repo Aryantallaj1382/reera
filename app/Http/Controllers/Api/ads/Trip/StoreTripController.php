@@ -89,6 +89,14 @@ class StoreTripController extends Controller
                 'is_main' => $img['is_main'],
             ]);
         }
+        $ad = Ad::find($request->ad_id);
+
+        $ad->update([
+            'is_finish' => 1,
+            'price'=> $request->price,
+            'currencies_id' => $request->currencies_id,
+
+        ]);
 
         return api_response([], __('messages.saved_successfully'));
     }

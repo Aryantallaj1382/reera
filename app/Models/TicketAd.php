@@ -11,23 +11,7 @@ class TicketAd extends Model
 
     protected $table = 'ticket_ads';
 
-    protected $fillable = [
-        'ad_id',
-        'ticket_type_id',
-        'number',
-        'date',
-        'text',
-        'site_massage',
-        'my_phone',
-        'other_phone',
-        'other_phone_number',
-        'currencies_id',
-        'price',
-        'donation',
-        'cash',
-        'installments',
-        'check',
-    ];
+    protected $guarded = [];
     public function ad()
     {
         return $this->belongsTo(Ad::class, 'ad_id');

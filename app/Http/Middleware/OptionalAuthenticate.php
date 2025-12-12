@@ -24,7 +24,7 @@ class OptionalAuthenticate
             $accessToken = PersonalAccessToken::findToken($token);
 
             if ($accessToken) {
-                Auth::login($accessToken->tokenable);
+                Auth::setUser($accessToken->tokenable);
             }
         }
 

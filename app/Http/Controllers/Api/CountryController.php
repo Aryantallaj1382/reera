@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\City;
 use App\Models\Country;
+use App\Models\Language;
+use App\Models\Nationality;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -37,4 +39,17 @@ class CountryController extends Controller
         ]);
     }
 
+
+
+
+    public function getNationality(Request $request)
+    {
+        $Nationality = Nationality::all();
+        return api_response( $Nationality);
+    }
+    public function getLanguage(Request $request)
+    {
+        $Language = Language::all();
+        return api_response( $Language);
+    }
 }

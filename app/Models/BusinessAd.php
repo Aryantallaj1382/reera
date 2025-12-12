@@ -12,21 +12,8 @@ class BusinessAd extends Model
 
     protected $table = 'business_ads';
 
-    protected $fillable = [
-        'ad_id',
-        'condition',
-        'text',
-        'site_massage',
-        'my_phone',
-        'other_phone',
-        'other_phone_number',
-        'currencies_id',
-        'price',
-        'donation',
-        'cash',
-        'installments',
-        'check',
-    ];
+    protected $guarded = [];
+
 
 
     public function ad()

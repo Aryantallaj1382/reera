@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\ads\Ticket\TicketController;
 use App\Http\Controllers\Api\ads\Trip\StoreTripController;
 use App\Http\Controllers\Api\ads\Trip\TripController;
 use App\Http\Controllers\Api\ads\Trip\UpdateTripController;
+use App\Http\Controllers\Api\ads\UserShowController;
 use App\Http\Controllers\Api\ads\Vehicle\StoreVehicleController;
 use App\Http\Controllers\Api\ads\Vehicle\UpdateVehicleController;
 use App\Http\Controllers\Api\ads\Vehicle\VehicleController;
@@ -45,7 +46,18 @@ use App\Http\Controllers\Api\Profile\WalletController;
 use Illuminate\Support\Facades\Route;
 
 
+
+
+Route::prefix('user_show')->group(function () {
+    Route::get('/{id}', [UserShowController::class, 'index']);          // ارسال کد تایید
+    Route::get('/rate/{id}', [UserShowController::class, 'rate']); // بررسی وجود کاربر
+    Route::get('/comment/{id}', [UserShowController::class, 'user_Comments']);              // ورود
+    Route::get('/ads', [UserShowController::class, 'user_ads']);
+});
+Route::middleware('optional.auth')->group(function () {
 Route::get('/getCountries', [CountryController::class, 'getCountries']);
+Route::get('/getNationality', [CountryController::class, 'getNationality']);
+Route::get('/getLanguage', [CountryController::class, 'getLanguage']);
 Route::get('/info', [ProfileController::class, 'info']);
 Route::get('/currency', [AdsController::class, 'currency']);
 Route::get('/getCategory', [\App\Http\Controllers\Api\CategoryController::class, 'index']);
@@ -58,17 +70,19 @@ Route::prefix('auth')->group(function () {
     Route::post('reset', [AuthController::class, 'resetPasswordWithOtp']);
 });
 
+
 Route::prefix('ads')->controller(AdsController::class)->group(function () {
     Route::get('/',  'index');
+    Route::get('/comments/{id}',  'comments');
     Route::get('/rates',  'rates');
     Route::post('/convert',  'convert1');
     Route::delete('/delete/{id}',  'delete');
     Route::post('/request/{id}',  'request_ad')->middleware('auth:sanctum');
     Route::get('/get_filters',  'get_filters');
     Route::post('/like/{id}',  'toggleLike')->middleware('auth:sanctum');
-    Route::post('/{ad}/report', 'store')->middleware('auth:sanctum');
+    Route::post('/{id}/report', 'store')->middleware('auth:sanctum');
 
-    Route::prefix('house')->controller(HousingController::class)->group(function () {
+    Route::prefix('housing')->controller(HousingController::class)->group(function () {
         Route::get('/ ', 'index');
         Route::get('/currency', [AdsController::class, 'rates']);
         Route::get('/get_filters', 'get_filters')->middleware('optional.auth');
@@ -78,7 +92,6 @@ Route::prefix('ads')->controller(AdsController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
         Route::get('/get_filters', 'get_filters')->middleware('optional.auth');
         Route::get('/{id}', 'show')->middleware('optional.auth');
-
     });
     Route::prefix('digital')->controller(DigitalController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
@@ -89,40 +102,48 @@ Route::prefix('ads')->controller(AdsController::class)->group(function () {
     Route::prefix('business')->controller(BusinessController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
         Route::get('/get_filters', 'get_filters')->middleware('optional.auth');
-
         Route::get('/{id}', 'show')->middleware('optional.auth');
     });
     Route::prefix('kitchen')->controller(KitchenController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
-
+        Route::get('/get_filters', 'get_filters')->middleware('optional.auth');
         Route::get('/{id}', 'show')->middleware('optional.auth');
     });
     Route::prefix('personal')->controller(PersonalAdController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
+        Route::get('/get_filters', 'get_filters')->middleware('optional.auth');
         Route::get('/{id}', 'show')->middleware('optional.auth');
     });
     Route::prefix('service')->controller(ServiceController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
+        Route::get('/get_filters', 'get_filters')->middleware('optional.auth');
         Route::get('/{id}', 'show')->middleware('optional.auth');
     });
     Route::prefix('vehicle')->controller(VehicleController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
+        Route::get('/get_filters', 'get_filters')->middleware('optional.auth');
         Route::get('/{id}', 'show')->middleware('optional.auth');
     });
+
     Route::prefix('ticket')->controller(TicketController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
+        Route::get('/get_filters', 'get_filters')->middleware('optional.auth');
         Route::get('/{id}', 'show')->middleware('optional.auth');
     });
     Route::prefix('trip')->controller(TripController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
+        Route::get('/get_filters', 'get_filters')->middleware('optional.auth');
         Route::get('/{id}', 'show')->middleware('optional.auth');
     });
     Route::prefix('visa')->controller(\App\Http\Controllers\Api\ads\Visa\VisaController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
+        Route::get('/get_filters', 'get_filters')->middleware('optional.auth');
         Route::get('/{id}', 'show')->middleware('optional.auth');
     });
     Route::prefix('recruitment')->controller(RecruitmentController::class)->group(function () {
         Route::get('/currency', [AdsController::class, 'rates']);
+        Route::get('/get_filters', 'get_filters')->middleware('optional.auth');
+
         Route::get('/resume', 'resume')->middleware('optional.auth');
         Route::get('/resume/pdf', 'downloadPdf')->middleware('optional.auth');
         Route::get('/{id}', 'show')->middleware('optional.auth');
@@ -236,7 +257,6 @@ Route::prefix('update')->group(function () {
     });
 });
 Route::prefix('store')->middleware('auth:sanctum')->group(function () {
-
     Route::prefix('housing')->controller(StoreHousingController::class)->group(function () {
         Route::get('/',  'index');
         Route::post('/first',  'first');
@@ -246,11 +266,9 @@ Route::prefix('store')->middleware('auth:sanctum')->group(function () {
         Route::post('/fifth',  'fifth');
         Route::post('/sixth',  'sixth');
         Route::delete('/delete/{id}',  'delete');
-
     });
     Route::prefix('kitchen')->controller(StoreKitchenController::class)->group(function () {
         Route::get('/',  'index');
-
         Route::post('/first',  'first');
         Route::post('/second',  'second');
         Route::post('/third',  'third');
@@ -432,4 +450,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
     });
 
+});
 });

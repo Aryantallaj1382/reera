@@ -193,6 +193,9 @@ class StorePersonalAdController extends Controller
         ]);
         $ad->update([
             'is_finish' => 1,
+            'price'=> $request->price,
+            'currencies_id' => $request->currencies_id,
+
         ]);
         return api_response([], __('messages.saved_successfully'));
 

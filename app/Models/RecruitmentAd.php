@@ -6,31 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class RecruitmentAd extends Model
 {
-    protected $fillable = [
-        'ad_id',
-        'languages_id',
-        'recruitment_categories_id',
-        'days',
-        'time',
-        'degree',
-        'details',
-        'skill',
-        'role',
-        'site_massage',
-        'my_phone',
-        'other_phone',
-        'other_phone_number',
-        'currencies_id',
-        'price',
-        'donation',
-        'cash',
-        'installments',
-        'check',
-        'type',
-        'plan_type',
-        'pyment_status',
-    ];
-
+    protected $guarded = [];
     protected $casts = [
         'details' => 'array',
         'skill'   => 'array',

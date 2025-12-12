@@ -3,9 +3,64 @@
 namespace App\Http\Controllers\Api\ads\Service;
 
 use App\Models\Ad;
+use App\Models\Category\Category;
+use App\Models\Kitchen\KitchenAd;
+use App\Models\PersonalAdType;
+use App\Models\ServiceExpertise;
+use App\Models\ServicesAd;
+use Illuminate\Http\Request;
 
 class ServiceController
 {
+    public function get_filters(Request $request)
+    {
+        $mainCategory = Category::where('slug', 'services')->with('children')->first();
+        if (!$mainCategory) {
+            return api_response([], 'دسته‌بندی اصلی پیدا نشد', false);
+        }
+        $mainChildren = $mainCategory->children->map(function ($child) {
+            return [
+                'id' => $child->id,
+                'category' => $child->title,
+            ];
+        });
+        $extraChildren = [];
+        if ($request->filled('category_id')) {
+            $selectedCategory = Category::where('id', $request->category_id)->with('children')->first();
+
+            if ($selectedCategory) {
+                $extraChildren = $selectedCategory->children->map(function ($child) {
+                    return [
+                        'id' => $child->id,
+                        'category' => $child->title,
+                    ];
+                });
+            }
+        }
+
+        $lang = Ad::whereRelation('category', 'slug', 'services')->with('address')->get();
+        $loc = $lang->filter(fn($item) => $item->address)->map(function ($item) {
+            return [
+                'latitude' => $item->address->latitude,
+                'longitude' => $item->address->longitude,
+            ];
+        })->values();
+        $a = ServiceExpertise::all();
+
+
+        $minPrice =ServicesAd::min('price');
+        $maxPrice =ServicesAd::max('price');
+
+        return api_response([
+            'main_category' => $mainChildren,
+            'selected_category' => $extraChildren,
+            'type' => $a,
+            'minPrice' => $minPrice,
+            'maxPrice' => $maxPrice,
+            'loc' =>$loc
+        ]);
+    }
+
     public function show($id)
     {
 
@@ -20,6 +75,9 @@ class ServiceController
             'id' => $ad->id,
             'title' => $ad->title,
             'slug' => $ad->slug,
+            'is_like' => $ad->is_like,
+            'user_id' => $ad->user_id,
+
             'image' => getImages($ad->id),
             'address' => getAddress($ad->id),
             'seller' => getSeller($ad->id),

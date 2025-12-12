@@ -3,9 +3,64 @@
 namespace App\Http\Controllers\Api\ads\PersonalAds;
 
 use App\Models\Ad;
+use App\Models\Category\Category;
+use App\Models\Kitchen\KitchenAd;
+use App\Models\Kitchen\KitchenBrand;
+use App\Models\Kitchen\KitchenType;
+use App\Models\PersonalAdType;
+use Illuminate\Http\Request;
 
 class PersonalAdController
 {
+    public function get_filters(Request $request)
+    {
+        $mainCategory = Category::where('slug', 'personal')->with('children')->first();
+        if (!$mainCategory) {
+            return api_response([], 'دسته‌بندی اصلی پیدا نشد', false);
+        }
+        $mainChildren = $mainCategory->children->map(function ($child) {
+            return [
+                'id' => $child->id,
+                'category' => $child->title,
+            ];
+        });
+        $extraChildren = [];
+        if ($request->filled('category_id')) {
+            $selectedCategory = Category::where('id', $request->category_id)->with('children')->first();
+
+            if ($selectedCategory) {
+                $extraChildren = $selectedCategory->children->map(function ($child) {
+                    return [
+                        'id' => $child->id,
+                        'category' => $child->title,
+                    ];
+                });
+            }
+        }
+
+        $lang = Ad::whereRelation('category', 'slug', 'personal')->with('address')->get();
+        $loc = $lang->filter(fn($item) => $item->address)->map(function ($item) {
+            return [
+                'latitude' => $item->address->latitude,
+                'longitude' => $item->address->longitude,
+            ];
+        })->values();
+        $a = PersonalAdType::all();
+
+
+        $minPrice =KitchenAd::min('price');
+        $maxPrice =KitchenAd::max('price');
+        return api_response([
+            'main_category' => $mainChildren,
+            'selected_category' => $extraChildren,
+            'type' => $a,
+            'minPrice' => $minPrice,
+            'maxPrice' => $maxPrice,
+
+            'loc' =>$loc
+        ]);
+    }
+
     public function show($id)
     {
 
@@ -18,6 +73,9 @@ class PersonalAdController
         $return =[
 
             'id' => $ad->id,
+            'is_like' => $ad->is_like,
+            'user_id' => $ad->user_id,
+
             'title' => $ad->title,
             'slug' => $ad->slug,
             'image' => getImages($ad->id),

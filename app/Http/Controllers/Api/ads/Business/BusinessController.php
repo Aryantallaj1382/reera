@@ -45,7 +45,7 @@ class BusinessController extends Controller
         $minArea = HousingAds::min('area');
         $maxArea = HousingAds::max('area');
 
-        $lang = Ad::where('category_id', 1)->with('address')->get();
+        $lang = Ad::whereRelation('category', 'slug', 'business')->with('address')->get();
         $a = $lang->filter(fn($item) => $item->address)->map(function ($item) {
             return [
                 'latitude' => $item->address->latitude,
@@ -77,6 +77,8 @@ class BusinessController extends Controller
 
             'id' => $ad->id,
             'title' => $ad->title,
+            'is_like' => $ad->is_like,
+            'user_id' => $ad->user_id,
             'slug' => $ad->slug,
             'image' => getImages($ad->id),
             'address' => getAddress($ad->id),

@@ -110,6 +110,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Finance::class);
     }
+    public function getProfileAttribute($value)
+    {
+        return $value? url('public/'.$value) : null;
+
+    }
+
 
     public function getMembershipDurationAttribute()
     {

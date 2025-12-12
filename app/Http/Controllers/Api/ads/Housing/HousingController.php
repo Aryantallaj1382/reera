@@ -64,6 +64,9 @@ class HousingController extends Controller
             'id' => $ad->id,
             'title' => $ad->title,
             'slug' => $ad->slug,
+            'is_like' => $ad->is_like,
+            'user_id' => $ad->user_id,
+
             'image' => getImages($ad->id),
             'address' => getAddress($ad->id),
             'seller' => getSeller($ad->id),
@@ -173,7 +176,8 @@ class HousingController extends Controller
         $minArea = HousingAds::min('area');
         $maxArea = HousingAds::max('area');
 
-        $lang = Ad::where('category_id', 1)->with('address')->get();
+
+        $lang = Ad::whereRelation('category', 'slug', 'housing')->with('address')->get();
         $a = $lang->filter(fn($item) => $item->address)->map(function ($item) {
             return [
                 'latitude' => $item->address->latitude,
@@ -181,6 +185,9 @@ class HousingController extends Controller
             ];
         })->values();
 
+
+        $minYear = HousingAds::min('year');
+        $maxYear = HousingAds::max('year');
         return api_response([
             'main_category' => $mainChildren,
             'selected_category' => $extraChildren,
@@ -188,6 +195,8 @@ class HousingController extends Controller
             'max_price' => $maxPrice,
             'min_area' => $minArea,
             'max_area' => $maxArea,
+            'min_year' => $minYear,
+            'max_year' => $maxYear,
             'loc' =>$a
         ]);
     }

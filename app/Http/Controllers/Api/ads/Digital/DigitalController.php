@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Ad;
 use App\Models\Category\Category;
 use App\Models\Digital\DigitalAd;
+use App\Models\Digital\DigitalBrand;
+use App\Models\Digital\DigitalModel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
@@ -13,7 +15,7 @@ class DigitalController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Ad::with(['digitalAd', 'category', 'address'])->where('category_id',2);
+        $query = Ad::with(['digitalAd', 'category', 'address'])->where('category_id', 2);
 
         $this->applyFilters($request, $query);
         if ($request->filled('sort_by')) {
@@ -56,19 +58,20 @@ class DigitalController extends Controller
     public function show($id)
     {
         $ad = Ad::with('digitalAd')->find($id);
-        if(!$ad->digitalAd)
-        {
+        if (!$ad->digitalAd) {
             return api_response([], 'wrong id');
         }
-        $return =[
+        $return = [
             'id' => $ad->id,
             'title' => $ad->title,
             'slug' => $ad->slug,
+            'user_id' => $ad->user_id,
+
             'image' => getImages($ad->id),
             'address' => getAddress($ad->id),
             'seller' => getSeller($ad->id),
             'category' => $ad->category->title,
-            'compatibility' => $compatibility ??"برای مشخص شدن وارد حسابتان شوید",
+            'compatibility' => $compatibility ?? "برای مشخص شدن وارد حسابتان شوید",
             'category_parent' => $ad->root_category_title,
             'price' => $ad->digitalAd->price,
             'donation' => $ad->digitalAd->donation ?? null,
@@ -80,6 +83,7 @@ class DigitalController extends Controller
             'brand' => $ad->digitalAd->brand?->name,
             'view_time' => $ad->digitalAd->view_time,
             'model' => $ad->digitalAd->model?->name,
+            'is_like' => $ad->is_like,
             'condition' => $ad->digitalAd->condition,
             'location' => $ad->location,
             'details' => [
@@ -99,13 +103,14 @@ class DigitalController extends Controller
         ];
         return api_response($return);
     }
+
     public function get_filters(Request $request)
     {
-         $mainCategory = Category::where('slug', 'Digital')->with('children')->first();
+        $mainCategory = Category::where('slug', 'digital')->with('children')->first();
         if (!$mainCategory) {
             return api_response([], 'دسته‌بندی اصلی پیدا نشد', false);
         }
-        $mainChildren = $mainCategory->children->map(function ($child)  {
+        $mainChildren = $mainCategory->children->map(function ($child) {
             return [
                 'id' => $child->id,
                 'category' => $child->title,
@@ -113,7 +118,7 @@ class DigitalController extends Controller
             ];
         });
         $extraChildren = [];
-            if ($request->filled('category_id')) {
+        if ($request->filled('category_id')) {
             $selectedCategory = Category::where('id', $request->category_id)->with('children')->first();
             if ($selectedCategory) {
                 $extraChildren = $selectedCategory->children->map(function ($child) {
@@ -126,20 +131,24 @@ class DigitalController extends Controller
         }
         $minPrice = DigitalAd::min('price');
         $maxPrice = DigitalAd::max('price');
-        $lang = Ad::where('category_id', 2)->with('address')->get();
+        $lang = Ad::whereRelation('category', 'slug', 'digital')->with('address')->get();
         $a = $lang->filter(fn($item) => $item->address)->map(function ($item) {
             return [
                 'latitude' => $item->address->latitude,
                 'longitude' => $item->address->longitude,
             ];
         })->values();
-
+        $brand = DigitalBrand::all();
+        $q = $request->get('brand');
+        $model = DigitalModel::where('brand_id', $q)->get();
         return api_response([
             'main_category' => $mainChildren,
             'selected_category' => $extraChildren,
             'min_price' => $minPrice,
             'max_price' => $maxPrice,
-            'loc' =>$a
+            'loc' => $a,
+            'brands' => $brand,
+            'models' => $model,
         ]);
 
     }
@@ -147,7 +156,7 @@ class DigitalController extends Controller
     private function applyFilters(Request $request, Builder $query)
     {
         if ($request->filled('search')) {
-            $query->where('title','like', '%'.$request->search.'%');
+            $query->where('title', 'like', '%' . $request->search . '%');
         }
         if ($request->filled('category_id')) {
             $this->filterCategory($query, $request->category_id);
@@ -162,20 +171,20 @@ class DigitalController extends Controller
         }
 
         if ($request->filled('city_id')) {
-            $query->whereRelation('address','city_id', '=', $request->city_id);
+            $query->whereRelation('address', 'city_id', '=', $request->city_id);
         }
 
         if ($request->filled('country_id')) {
-            $query->whereRelation('address','country_id', '=', $request->country_id);
+            $query->whereRelation('address', 'country_id', '=', $request->country_id);
         }
 
         if ($request->filled('region')) {
-            $query->whereRelation('address','region', 'like', '%'.$request->region.'%');
+            $query->whereRelation('address', 'region', 'like', '%' . $request->region . '%');
         }
 
 
         if ($request->filled('currencies_id')) {
-            $query->whereRelation('digitalAd','currencies_id', '=', $request->currencies_id);
+            $query->whereRelation('digitalAd', 'currencies_id', '=', $request->currencies_id);
         }
 
 
@@ -201,7 +210,8 @@ class DigitalController extends Controller
             }
             if ($request->has('stand') && $request->stand) {
                 $q->where('stand', true);
-            } if ($request->has('cable') && $request->cable) {
+            }
+            if ($request->has('cable') && $request->cable) {
                 $q->where('cable', true);
             }
             if ($request->has('condition') && $request->condition) {
@@ -211,6 +221,7 @@ class DigitalController extends Controller
 
         });
     }
+
     private function filterCategory(Builder $query, $categoryId)
     {
         $selectedCategory = Category::with('children', 'parent')->find($categoryId);

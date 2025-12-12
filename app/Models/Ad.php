@@ -30,63 +30,111 @@ class Ad extends Model
     {
         if ($this->housingAds) {
             return [
-                'bedrooms' => $this->housingAds->number_of_bedrooms,
-                'area' => $this->housingAds->area,
+                'key' => $this->housingAds->number_of_bedrooms,
+                'value' => $this->housingAds->area,
+                'price' => $this->housingAds->price,
+                'currency' => $this->housingAds?->currency?->title,
+                'code' => $this->housingAds->currency?->code,
+                'type' => $this->root_category_slug,
+
             ];
         }
 
         if ($this->digitalAd) {
             return [
-                'condition' => $this->digitalAd->condition,
+                'key' => $this->digitalAd->condition,
+                'value' => $this->digitalAd->brand->name,
+                'type' => $this->root_category_slug,
+                'price' => $this->digitalAd->price,
+                'currency' => $this->digitalAd->currency?->title,
+                'code' => $this->digitalAd->currency?->code,
             ];
         }
         if ($this->recruitmentAd) {
             return [
-                'price' => $this->price,
-                'time' => $this->recruitmentAd->time,
-                'type' => $this->recruitmentAd->type,
-                'currency' => $this?->recruitmentAd?->currency?->title,
-                'icon' => null
+                'key' => $this->category->name,
+                'value' => $this->recruitmentAd->time,
+                'type' => $this->root_category_slug,
+                'price' => $this->recruitmentAd?->price,
+                'currency' => $this->recruitmentAd->currency?->title,
+                'code' => $this->recruitmentAd->currency?->code,
+//                'type' => $this->recruitmentAd->type,
+//                'currency' => $this?->recruitmentAd?->currency?->title,
+//                'icon' => null
 
             ];
         }
         if ($this->kitchenAds) {
             return [
-                'condition' => $this->kitchenAds->condition,
+                'key' => $this->kitchenAds->type->name,
+                'value' => $this->kitchenAds->brand->name,
+                'type' => $this->root_category_slug,
+                'price' => $this->kitchenAds->price,
+                'currency' => $this->kitchenAds->currency?->title,
+                'code' => $this->kitchenAds->currency?->code,
 
             ];
         }
         if ($this->vehiclesAds) {
             return [
-                'model' => $this->vehiclesAds?->model?->name,
-                'brand' => $this->vehiclesAds?->brand?->name,
+                'key' => $this->vehiclesAds?->model?->name,
+                'value' => $this->vehiclesAds?->brand?->name,
+                'type' => $this->root_category_slug,
+                'price' => $this->vehiclesAds->price,
+                'currency' => $this->vehiclesAds->currency?->title,
+                'code' => $this->vehiclesAds->currency?->code,
 
             ];
         }
 
         if ($this->serviceAds) {
             return [
-                'expertise' => $this->serviceAds?->expertise?->name,
+                'key' => $this->serviceAds?->expertise?->name,
+                'type' => $this->root_category_slug,
 
-
+                'price' => $this->serviceAds->price,
+                'currency' => $this->serviceAds?->currency?->title,
+                'code' => $this->serviceAds->currency?->code,
             ];
         }
         if ($this->housemate) {
             return [
-                'x' => calculateCompatibilityPrecise($this->housemate->id, auth()->id()),
-
+                'compatibility' => calculateCompatibilityPrecise($this->housemate->id, auth()->id()),
+                'key' => $this->housemate->number_of_bedrooms,
+                'value' => $this->housemate->area,
+                'type' => $this->root_category_slug,
+                'price' => $this->housemate->price,
+                'currency' => $this->housemate->currency->title,
+                'code' => $this->housemate->currency->code,
+            ];
+        }
+        if ($this->ticket) {
+            return [
+                'key' => $this->ticket?->date ? Carbon::parse($this->ticket->date)->format('Y-m-d') : null,
+                'value' => $this->ticket->ticketType?->name,
+                'type' => $this->root_category_slug,
+                'price' => $this->ticket->price,
+                'currency' => $this->ticket->currency->title,
+                'code' => $this->ticket->currency->code,
             ];
         }
         if ($this->personalAd) {
             return [
-                'expertise' => $this->personalAd?->type?->name,
-
+                'key' => $this->personalAd?->type?->name,
+                'type' => $this->root_category_slug,
+                'price' => $this->personalAd->price,
+                'condition' => $this->personalAd->condition,
+                'currency' => $this->personalAd?->currency?->title,
+                'code' => $this->personalAd?->currency?->code,
             ];
         }
         if ($this->businessAd) {
             return [
                 'condition' => $this->businessAd?->condition,
-
+                'type' => $this->root_category_slug,
+                'price' => $this->businessAd->price,
+                'currency' => $this->businessAd?->currency?->title,
+                'code' => $this->businessAd?->currency?->code,
             ];
         }
 
@@ -129,6 +177,18 @@ class Ad extends Model
     {
         return $this->morphMany(Like::class, 'likeable');
     }
+    public function getIsLikeAttribute()
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        return $this->likes()->where('user_id', $user->id)->exists();
+    }
+
+
 
     public function images()
     {
@@ -216,7 +276,10 @@ class Ad extends Model
     {
         return $this->hasOne(BusinessAd::class);
     }
-
+    public function currency()
+    {
+        return $this->belongsTo(Currency::class, 'currencies_id');
+    }
 
     public function getLocationAttribute(): string
     {
@@ -341,8 +404,26 @@ class Ad extends Model
             if ($request->filled('bedrooms')) {
                 $q->where('number_of_bedrooms', $request->bedrooms);
             }
-            if ($request->filled('area_min')) {
-                $q->where('area', '>=', $request->area_min);
+            if ($request->filled('bathroom')) {
+                $q->where('number_of_bathroom', $request->bathroom);
+            }
+            if ($request->filled('min_area')) {
+                $q->where('area', '>=', $request->min_area);
+            }
+            if ($request->filled('max_area')) {
+                $q->where('area', '<=', $request->max_area);
+            }
+            if ($request->filled('min_price')) {
+                $q->where('price', '>=', $request->min_price);
+            }
+            if ($request->filled('max_price')) {
+                $q->where('price', '<=', $request->max_price);
+            }
+            if ($request->filled('min_year')) {
+                $q->where('year', '>=', $request->min_year);
+            }
+            if ($request->filled('max_year')) {
+                $q->where('year', '<=', $request->max_year);
             }
         });
     }
@@ -350,12 +431,31 @@ class Ad extends Model
     public function scopeVehicles($query, $request)
     {
         return $query->whereHas('vehiclesAds', function ($q) use ($request) {
-            if ($request->filled('bedrooms')) {
-                $q->where('number_of_bedrooms', $request->bedrooms);
+            if ($request->filled('min_year')) {
+                $q->where('date_model', '>=', $request->min_year);
             }
-            if ($request->filled('area_min')) {
-                $q->where('area', '>=', $request->area_min);
+            if ($request->filled('max_year')) {
+                $q->where('date_model', '<=', $request->max_year);
             }
+            if ($request->filled('min_price')) {
+                $q->where('price', '>=', $request->min_price);
+            }
+            if ($request->filled('max_price')) {
+                $q->where('price', '<=', $request->max_price);
+            }
+            if ($request->filled('brand_id')) {
+                $q->where('vehicle_brand_id',  $request->brand_id);
+            }
+            if ($request->filled('model_id')) {
+                $q->where('vehicle_model_id',  $request->model_id);
+            }
+            if ($request->filled('min_function')) {
+                $q->where('function', '>=', $request->min_function);
+            }
+            if ($request->filled('max_function')) {
+                $q->where('function', '<=', $request->max_function);
+            }
+
         });
     }
 
@@ -365,8 +465,168 @@ class Ad extends Model
             if ($request->filled('condition')) {
                 $q->where('condition', $request->condition);
             }
+            if ($request->filled('min_price')) {
+                $q->where('price', '>=', $request->min_price);
+            }
+            if ($request->filled('max_price')) {
+                $q->where('price', '<=', $request->max_price);
+            }
+            if ($request->filled('brand_id')) {
+                $q->where('digital_model_id',  $request->brand_id);
+            }
+            if ($request->filled('model_id')) {
+                $q->where('digital_brand_id',  $request->model_id);
+            }
         });
     }
+    public function scopeKitchen($query, $request)
+    {
+        return $query->whereHas('kitchenAds', function ($q) use ($request) {
+            if ($request->filled('condition')) {
+                $q->where('condition', $request->condition);
+            }
+            if ($request->filled('min_price')) {
+                $q->where('price', '>=', $request->min_price);
+            }
+            if ($request->filled('max_price')) {
+                $q->where('price', '<=', $request->max_price);
+            }
+            if ($request->filled('brand_id')) {
+                $q->where('kitchen_brand_id',  $request->brand_id);
+            }
+            if ($request->filled('model_id')) {
+                $q->where('kitchen_type_id',  $request->model_id);
+            }
+        });
+    }
+    public function scopeVisa($query, $request)
+    {
+        return $query->whereHas('visa', function ($q) use ($request) {
+            if ($request->filled('country_id')) {
+                $q->where('country_id', $request->country_id);
+            }
+            if ($request->filled('min_price')) {
+                $q->where('price', '>=', $request->min_price);
+            }
+            if ($request->filled('max_price')) {
+                $q->where('price', '<=', $request->max_price);
+            }
+            if ($request->filled('type_id')) {
+                $q->whereHas('types', function ($q) use ($request) {
+                    $q->where('types.id', $request->type_id);
+
+                });
+            }
+        });
+    }
+    public function scopePersonal($query, $request)
+    {
+        return $query->whereHas('personalAd', function ($q) use ($request) {
+            if ($request->filled('condition')) {
+                $q->where('condition', $request->condition);
+            }
+            if ($request->filled('min_price')) {
+                $q->where('price', '>=', $request->min_price);
+            }
+            if ($request->filled('max_price')) {
+                $q->where('price', '<=', $request->max_price);
+            }
+
+        });
+    }
+    public function scopeBusiness($query, $request)
+    {
+        return $query->whereHas('businessAd', function ($q) use ($request) {
+            if ($request->filled('condition')) {
+                $q->where('condition', $request->condition);
+            }
+            if ($request->filled('personal_ads_type_id')) {
+                $q->where('personal_ads_type_id', $request->personal_ads_type_id);
+            }
+            if ($request->filled('gender')) {
+                $q->where('gender', $request->gender);
+            }
+
+
+            if ($request->filled('min_price')) {
+                $q->where('price', '>=', $request->min_price);
+            }
+            if ($request->filled('max_price')) {
+                $q->where('price', '<=', $request->max_price);
+            }
+        });
+    }
+    public function scopeServices($query, $request)
+    {
+        return $query->whereHas('kitchenAds', function ($q) use ($request) {
+            if ($request->filled('service_expertise_id')) {
+                $q->where('service_expertise_id', $request->service_expertise_id);
+            }
+
+            if ($request->filled('min_price')) {
+                $q->where('price', '>=', $request->min_price);
+            }
+            if ($request->filled('max_price')) {
+                $q->where('price', '<=', $request->max_price);
+            }
+        });
+    }
+    public function scopeRecruitment($query, $request)
+    {
+        return $query->whereHas('recruitmentAd', function ($q) use ($request) {
+            if ($request->filled('languages_id')) {
+                $q->where('languages_id', $request->languages_id);
+            }
+            if ($request->filled('recruitment_categories_id')) {
+                $q->where('recruitment_categories_id', $request->recruitment_categories_id);
+            }
+            if ($request->filled('cooperation')) {
+                $q->where('type', $request->cooperation);
+            }
+            if ($request->filled('degree')) {
+                $q->where('degree', $request->degree);
+            }
+
+            if ($request->filled('min_price')) {
+                $q->where('price', '>=', $request->min_price);
+            }
+            if ($request->filled('max_price')) {
+                $q->where('price', '<=', $request->max_price);
+            }
+        });
+    }
+    public function scopeTicket($query, $request)
+    {
+        return $query->whereHas('ticket', function ($q) use ($request) {
+            if ($request->filled('ticket_type_id')) {
+                $q->where('ticket_type_id', $request->ticket_type_id);
+            }
+
+            if ($request->filled('min_price')) {
+                $q->where('price', '>=', $request->min_price);
+            }
+            if ($request->filled('max_price')) {
+                $q->where('price', '<=', $request->max_price);
+            }
+        });
+    }
+    public function scopeHousemate($query, $request)
+    {
+//        return $query->whereHas('kitchenAds', function ($q) use ($request) {
+//            if ($request->filled('condition')) {
+//                $q->where('condition', $request->condition);
+//            }
+//        });
+    }
+    public function scopeTrip($query, $request)
+    {
+//        return $query->whereHas('kitchenAds', function ($q) use ($request) {
+//            if ($request->filled('condition')) {
+//                $q->where('condition', $request->condition);
+//            }
+//        });
+    }
+
 
     protected function rootCategorySlug(): Attribute
     {
@@ -401,7 +661,14 @@ class Ad extends Model
         'sold' => 'فروخته شده',
     ];
 
-
+    protected static function booted()
+    {
+        static::creating(function ($ad) {
+            if (empty($ad->expiration_date)) {
+                $ad->expiration_date = Carbon::now()->addMonths(2);
+            }
+        });
+    }
 
 
 }
