@@ -56,6 +56,8 @@ class HousingController extends Controller
     public function show($id)
     {
         $ad = Ad::with('housingAds')->find($id);
+        $ad->increment('view');
+
         if(!$ad->housingAds)
         {
             return api_response([], 'wrong id');

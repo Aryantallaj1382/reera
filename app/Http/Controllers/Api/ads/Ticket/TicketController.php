@@ -64,6 +64,7 @@ class TicketController
 {
 
     $ad = Ad::with('ticket')->find($id);
+    $ad->increment('view');
 
     if(!$ad->ticket)
     {

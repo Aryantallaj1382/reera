@@ -57,6 +57,7 @@ class TripController extends Controller
     {
 
         $ad = Ad::with('trip')->find($id);
+        $ad->increment('view');
 
         if (!$ad || !$ad->trip) {
             return api_response([], 'wrong id');

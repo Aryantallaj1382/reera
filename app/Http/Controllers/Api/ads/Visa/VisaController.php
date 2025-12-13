@@ -64,6 +64,7 @@ class VisaController extends Controller
     {
 
         $ad = Ad::with('visa')->find($id);
+        $ad->increment('view');
 
         if (!$ad || !$ad->visa) {
             return api_response([], 'wrong id');

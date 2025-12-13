@@ -382,19 +382,37 @@ class Ad extends Model
         $query->when($request->has('is_verified'), fn($q) => $q->where('is_verified', $request->is_verified)
         );
         switch ($request->sort) {
+
             case 'oldest':
                 $query->orderBy('created_at', 'asc');
                 break;
+
+            case 'newest':
+                $query->orderBy('created_at', 'desc');
+                break;
+
+            case 'view':
+                $query->orderByDesc('view');
+                break;
+
+            case 'popular': // پر بازدید + جدیدتر
+                $query->orderByDesc('view')
+                    ->orderByDesc('created_at');
+                break;
+
             case 'expensive':
                 $query->orderBy('price', 'desc');
                 break;
+
             case 'cheap':
                 $query->orderBy('price', 'asc');
                 break;
-            default: // newest
+
+            default: // حالت پیش‌فرض
                 $query->orderBy('created_at', 'desc');
                 break;
         }
+
         return $query;
     }
 

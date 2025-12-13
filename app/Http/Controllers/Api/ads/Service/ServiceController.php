@@ -65,6 +65,7 @@ class ServiceController
     {
 
         $ad = Ad::with('serviceAds')->find($id);
+        $ad->increment('view');
 
         if(!$ad->serviceAds)
         {

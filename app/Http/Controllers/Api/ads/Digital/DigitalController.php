@@ -58,6 +58,8 @@ class DigitalController extends Controller
     public function show($id)
     {
         $ad = Ad::with('digitalAd')->find($id);
+        $ad->increment('view');
+
         if (!$ad->digitalAd) {
             return api_response([], 'wrong id');
         }

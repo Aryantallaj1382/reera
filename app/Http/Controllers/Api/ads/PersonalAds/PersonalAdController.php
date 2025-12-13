@@ -65,6 +65,7 @@ class PersonalAdController
     {
 
         $ad = Ad::with('personalAd')->find($id);
+        $ad->increment('view');
 
         if(!$ad->personalAd)
         {

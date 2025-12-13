@@ -18,6 +18,8 @@ class KitchenController extends Controller
     {
 
         $ad = Ad::with('kitchenAds')->find($id);
+        $ad->increment('view');
+
 
         if(!$ad->kitchenAds)
         {

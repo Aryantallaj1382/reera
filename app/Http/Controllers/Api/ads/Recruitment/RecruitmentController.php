@@ -68,6 +68,7 @@ class RecruitmentController
     {
 
         $ad = Ad::with('recruitmentAd')->find($id);
+        $ad->increment('view');
 
         if (!$ad->recruitmentAd) {
             return api_response([], 'wrong id');

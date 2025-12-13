@@ -72,6 +72,7 @@ class VehicleController
     {
 
         $ad = Ad::with('vehiclesAds')->find($id);
+        $ad->increment('view');
 
         if(!$ad->vehiclesAds)
         {

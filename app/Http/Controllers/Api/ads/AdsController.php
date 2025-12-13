@@ -26,6 +26,13 @@ class AdsController extends Controller
     public function index(Request $request)
     {
         $query = Ad::query();
+
+        if ($request->sort === 'view') {
+            $query->orderByDesc('view');
+        } elseif ($request->sort === 'new') {
+            $query->orderByDesc('created_at');
+        }
+
         $currency = $request->currency;
         $query->filterCommon($request);
         if ($request->category_slug == 'housing') {

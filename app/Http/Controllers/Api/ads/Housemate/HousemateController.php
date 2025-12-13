@@ -14,6 +14,8 @@ class HousemateController
     {
 
         $ad = Ad::with('housemate')->find($id);
+        $ad->increment('view');
+
         if (auth()->user())
         {
             $compatibility =  calculateCompatibilityPrecise($ad->housemate->id , 1);

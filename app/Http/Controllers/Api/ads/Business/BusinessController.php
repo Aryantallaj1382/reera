@@ -68,6 +68,7 @@ class BusinessController extends Controller
     {
 
         $ad = Ad::with('businessAd')->find($id);
+        $ad->increment('view');
 
         if(!$ad->businessAd)
         {
