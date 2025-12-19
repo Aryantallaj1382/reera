@@ -58,8 +58,8 @@ class VehicleController
         return api_response([
             'minDate' => $minDate,
             'maxFunction' => $maxFunction,
-            'minPrice' => $minPrice,
-            'maxPrice' => $maxPrice,
+            'min_price' => $minPrice,
+            'max_price' => $maxPrice,
             'main_category' => $mainChildren,
             'selected_category' => $extraChildren,
             'brands' => $brand,

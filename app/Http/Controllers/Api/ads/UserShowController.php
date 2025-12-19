@@ -13,6 +13,7 @@ class UserShowController extends Controller
         $user = User::find($id);
         return api_response([
             'name' => $user->first_name.' '.$user->last_name,
+            'bio' =>'این بیو من است',
             'profile'=> $user->profile,
             'duration'=> $user->membership_duration,
             'ratings'=> $user->ratings_summary,
@@ -26,7 +27,7 @@ class UserShowController extends Controller
     public function user_ads($id)
     {
         $ads = Ad::where('user_id', $id)->get();
-        $ads->map(function ($ad) {
+        $a = $ads->map(function ($ad) {
             return[
                 'id'          => $ad->id,
                 'title'       => $ad->title,
@@ -38,10 +39,10 @@ class UserShowController extends Controller
                 'custom_info' => $ad->custom_info,
                 'root_category_slug' => $ad->root_category_slug,
                 'price' => $ad->price,
-                'currency' => $ad->currency->title,
+                'currency' => $ad->currency?->title,
             ];
         });
-        return api_response($ads);
+        return api_response($a);
 
     }
     public function rate($id)

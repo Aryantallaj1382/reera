@@ -110,8 +110,8 @@ class KitchenController extends Controller
             'brands' => $brand,
             'models' => $model,
             'loc' =>$a,
-            'minPrice' => $minPrice,
-            'maxPrice' => $maxPrice,
+            'min_price' => $minPrice,
+            'max_price' => $maxPrice,
         ]);
     }
 

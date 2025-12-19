@@ -4,13 +4,14 @@ namespace App\Http\Controllers\Api\Profile;
 
 use App\Http\Controllers\Controller;
 use App\Models\Comment;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class MyCommentController extends Controller
 {
     public function myAdComments()
     {
-        $user = auth()->user();
+        $user = User::find(5);
 
         $comments = $user->adComments()
             ->with(['user', 'parent']) // برای نمایش نویسنده کامنت و ریپلای‌ها

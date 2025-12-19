@@ -55,8 +55,8 @@ class ServiceController
             'main_category' => $mainChildren,
             'selected_category' => $extraChildren,
             'type' => $a,
-            'minPrice' => $minPrice,
-            'maxPrice' => $maxPrice,
+            'min_price' => $minPrice,
+            'max_price' => $maxPrice,
             'loc' =>$loc
         ]);
     }

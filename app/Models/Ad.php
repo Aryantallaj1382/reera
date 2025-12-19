@@ -137,6 +137,16 @@ class Ad extends Model
                 'code' => $this->businessAd?->currency?->code,
             ];
         }
+        if ($this->visa) {
+            return [
+                'type' => $this->root_category_slug,
+                'price' => $this->visa->price,
+                'currency' => $this->visa?->currency?->title,
+                'code' => $this->visa?->currency?->code,
+                'key' => $this->visa?->types()->first()?->name,
+
+            ];
+        }
 
         return null; // بهتره null برگردونی نه 22 مگر اینکه 22 معنای خاصی داشته باشه
     }
@@ -340,6 +350,22 @@ class Ad extends Model
     /////// filtes
     public function scopeFilterCommon($query, $request)
     {
+        $isVisaCategory = false;
+
+        if ($request->filled('category_id')) {
+            $category = Category::find($request->category_id);
+            if ($category && $category->slug === 'visa') { // یا هر شرطی که ویزا رو تشخیص می‌ده
+                $isVisaCategory = true;
+            }
+        }
+
+        if ($request->filled('category_slug')) {
+            if ($request->category_slug === 'visa') {
+                $isVisaCategory = true;
+            }
+        }
+
+
         $query->when($request->category_id, function ($q) use ($request) {
             $category = Category::with('children')->find($request->category_id);
             if ($category) {
@@ -359,13 +385,13 @@ class Ad extends Model
 
 
 
-        $query->when($request->country_id, function ($q) use ($request) {
+        $query->when($request->filled('country_id') && ! $isVisaCategory, function ($q) use ($request) {
             $q->whereHas('address', function ($q2) use ($request) {
                 $q2->where('country_id', $request->country_id);
             });
         });
 
-        $query->when($request->city_id, function ($q) use ($request) {
+        $query->when($request->city_id  && ! $isVisaCategory , function ($q) use ($request) {
             $q->whereHas('address', function ($q2) use ($request) {
                 $q2->where('city_id', $request->city_id);
             });
@@ -376,6 +402,8 @@ class Ad extends Model
                 $q2->where('region', $request->region);
             });
         });
+        $query->when($request->search, fn ($q) => $q->where('title', 'like', '%'.$request->search.'%'));
+
         $query->when($request->currency, fn($q) => $q->where('currency_id', $request->currency));
         $query->when($request->min_price, fn($q) => $q->where('price', '>=', $request->min_price));
         $query->when($request->max_price, fn($q) => $q->where('price', '<=', $request->max_price));
@@ -419,6 +447,7 @@ class Ad extends Model
     public function scopeFilterHousing($query, $request)
     {
         return $query->whereHas('housingAds', function ($q) use ($request) {
+
             if ($request->filled('bedrooms')) {
                 $q->where('number_of_bedrooms', $request->bedrooms);
             }
@@ -520,9 +549,7 @@ class Ad extends Model
     public function scopeVisa($query, $request)
     {
         return $query->whereHas('visa', function ($q) use ($request) {
-            if ($request->filled('country_id')) {
-                $q->where('country_id', $request->country_id);
-            }
+
             if ($request->filled('min_price')) {
                 $q->where('price', '>=', $request->min_price);
             }
@@ -531,10 +558,10 @@ class Ad extends Model
             }
             if ($request->filled('type_id')) {
                 $q->whereHas('types', function ($q) use ($request) {
-                    $q->where('types.id', $request->type_id);
-
+                    $q->where('visa_types.id', $request->type_id);
                 });
             }
+
         });
     }
     public function scopePersonal($query, $request)
@@ -651,7 +678,10 @@ class Ad extends Model
         return Attribute::get(function () {
             $category = $this->category;
 
+            if ($category->slug == 'housemate')
+                return 'housemate';
             while ($category && $category->parent) {
+
                 $category = $category->parent;
             }
 

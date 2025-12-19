@@ -223,12 +223,11 @@ class AdsController extends Controller
      */
     public function comments($id)
     {
-        // اگر مدل Ad داری، می‌تونی اول چک کنی وجود داره یا نه
         $ad = Ad::findOrFail($id);
 
         $comments = Comment::where('commentable_type', \App\Models\Ad::class)
             ->where('commentable_id', $id)
-            ->where('status', 'approved')
+//            ->where('status', 'approved')
             ->withCount('likes') // تعداد لایک‌ها
             ->with(['likes' => function ($query) {
                 if (auth()->check()) {

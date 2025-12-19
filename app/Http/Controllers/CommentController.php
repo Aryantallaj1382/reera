@@ -14,10 +14,10 @@ class CommentController extends Controller
             'body' => 'required|string',
             'id' => 'nullable|integer',
             'parent_id' => 'nullable|integer|exists:comments,id',
-            'owner_behavior_rating' => 'nullable|integer|min:1|max:5',
-            'price_clarity_rating' => 'nullable|integer|min:1|max:5',
-            'info_honesty_rating' => 'nullable|integer|min:1|max:5',
-            'cleanliness_rating' => 'nullable|integer|min:1|max:5',
+            'owner_behavior_rating' => 'nullable|integer|min:0|max:5',
+            'price_clarity_rating' => 'nullable|integer|min:0|max:5',
+            'info_honesty_rating' => 'nullable|integer|min:0|max:5',
+            'cleanliness_rating' => 'nullable|integer|min:0|max:5',
             'status' => 'nullable|in:approved,pending,rejected',
         ]);
 

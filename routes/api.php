@@ -46,14 +46,16 @@ use App\Http\Controllers\Api\Profile\WalletController;
 use Illuminate\Support\Facades\Route;
 
 
+//Route::get('/profile/my_comment',  [MyCommentController::class,'myAdComments']);
 
 
-Route::prefix('user_show')->group(function () {
-    Route::get('/{id}', [UserShowController::class, 'index']);          // ارسال کد تایید
-    Route::get('/rate/{id}', [UserShowController::class, 'rate']); // بررسی وجود کاربر
-    Route::get('/comment/{id}', [UserShowController::class, 'user_Comments']);              // ورود
-    Route::get('/ads', [UserShowController::class, 'user_ads']);
-});
+
+
+    Route::get('/user_show/{id}', [UserShowController::class, 'index']);          // ارسال کد تایید
+    Route::get('/user_show/rate/{id}', [UserShowController::class, 'rate']); // بررسی وجود کاربر
+    Route::get('/comments/user_show/{id}', [UserShowController::class, 'user_Comments']);              // ورود
+    Route::get('/user_show/ads/{id}', [UserShowController::class, 'user_ads']);
+
 Route::middleware('optional.auth')->group(function () {
 Route::get('/getCountries', [CountryController::class, 'getCountries']);
 Route::get('/getNationality', [CountryController::class, 'getNationality']);

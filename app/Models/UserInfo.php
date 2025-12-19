@@ -29,7 +29,7 @@ class UserInfo extends Model
     }
     public function getIntroVideoAttribute($value)
     {
-        return $value ? url($value) : null;
+        return $value ? url('public/'.$value) : null;
 
     }
 }

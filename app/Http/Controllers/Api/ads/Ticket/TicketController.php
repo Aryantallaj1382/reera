@@ -53,8 +53,8 @@ class TicketController
             'main_category' => $mainChildren,
             'selected_category' => $extraChildren,
             'type' => $brand,
-            'minPrice' => $minPrice,
-            'maxPrice' => $maxPrice,
+            'min_price' => $minPrice,
+            'max_price' => $maxPrice,
             'loc' =>$a
         ]);
     }

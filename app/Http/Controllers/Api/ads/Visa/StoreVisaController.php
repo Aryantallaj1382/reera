@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\ads\Visa;
 use App\Http\Controllers\Controller;
 use App\Models\Ad;
 use App\Models\AdImage;
+use App\Models\Currency;
 use App\Models\Vehicle\Vehicle;
 use App\Models\Visa;
 use App\Models\VisaType;
@@ -15,9 +16,13 @@ class StoreVisaController extends Controller
 {
     public function index()
     {
+        $c = Currency::select(['id', 'title', 'code'])->get();
+
         $model = VisaType::all();
         return api_response(
             [
+                'currency' => $c,
+
                 'type' => $model,
             ]
         );

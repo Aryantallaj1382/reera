@@ -248,23 +248,27 @@ class ProfileController extends Controller
             'intro_video' => 'required|file|mimes:mp4,mov,avi,webm|max:51200',
         ]);
 
+
         $user = auth()->user();
-
         $info = $user->info;
-
-        if ($info && $info->intro_video && \Storage::disk('public')->exists($info->intro_video)) {
-            \Storage::disk('public')->delete($info->intro_video);
+        $directory = public_path('intro_videos');
+        if (!file_exists($directory)) {
+            mkdir($directory, 0755, true);
         }
-
-        $path = $request->file('intro_video')->store('intro_videos', 'public');
-
-        $userInfo = UserInfo::updateOrCreate(
+        if ($info && $info->intro_video && file_exists(public_path($info->intro_video))) {
+            unlink(public_path($info->intro_video));
+        }
+        $fileName = uniqid() . '.' . $request->intro_video->getClientOriginalExtension();
+        $request->intro_video->move($directory, $fileName);
+        $path = 'intro_videos/' . $fileName;
+        UserInfo::updateOrCreate(
             ['user_id' => $user->id],
             ['intro_video' => $path]
         );
 
         return api_response();
     }
+
     public function showIntroVideo()
     {
         $user = auth()->user();
@@ -276,7 +280,6 @@ class ProfileController extends Controller
         }
 
         return api_response([
-            'has_video' => false,
             'video' => $info->intro_video,
         ], __('messages.saved_successfully'));
 
