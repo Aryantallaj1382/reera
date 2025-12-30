@@ -43,4 +43,14 @@ class KitchenAd extends Model
     {
         return $this->belongsTo(Currency::class, 'currencies_id');
     }
+    public function getConditionFaAttribute()
+    {
+        return match ($this->condition) {
+            'new' => 'نو',
+            'almost_new' => 'در حد نو',
+            'used' => 'کارکرده',
+            'needs_repair' => 'نیاز به تعمیر',
+            default => 'نامشخص',
+        };
+    }
 }

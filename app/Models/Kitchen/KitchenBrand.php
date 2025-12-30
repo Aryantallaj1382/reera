@@ -4,7 +4,7 @@ namespace App\Models\Kitchen;
 
 use Illuminate\Database\Eloquent\Model;
 
-class KitchenBrand extends Model
+class   KitchenBrand extends Model
 {
     protected $guarded = [];
     public function kitchen()

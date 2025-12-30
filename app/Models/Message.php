@@ -17,4 +17,9 @@ class Message extends Model
     {
         return $this->belongsTo(User::class, 'sender_id');
     }
+    public function getFileAttribute($value)
+    {
+        return $value ? url('public/'.$value) : null;
+
+    }
 }

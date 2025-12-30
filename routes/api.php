@@ -36,6 +36,7 @@ use App\Http\Controllers\Api\ads\Vehicle\UpdateVehicleController;
 use App\Http\Controllers\Api\ads\Vehicle\VehicleController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Auth\GoogleController;
+use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\CountryController;
 use App\Http\Controllers\Api\Profile\DashboardController;
 use App\Http\Controllers\Api\Profile\LikedAdsController;
@@ -48,13 +49,26 @@ use Illuminate\Support\Facades\Route;
 
 //Route::get('/profile/my_comment',  [MyCommentController::class,'myAdComments']);
 
+Route::get('/group_chat/{id}', [\App\Http\Controllers\Api\GroupChatController::class, 'message'])->middleware('auth:sanctum');          // ارسال کد تایید
+Route::post('/group_chat/send', [\App\Http\Controllers\Api\GroupChatController::class, 'send'])->middleware('auth:sanctum');
 
 
 
-    Route::get('/user_show/{id}', [UserShowController::class, 'index']);          // ارسال کد تایید
-    Route::get('/user_show/rate/{id}', [UserShowController::class, 'rate']); // بررسی وجود کاربر
-    Route::get('/comments/user_show/{id}', [UserShowController::class, 'user_Comments']);              // ورود
-    Route::get('/user_show/ads/{id}', [UserShowController::class, 'user_ads']);
+Route::middleware('auth:sanctum')->prefix('chat')->controller(ChatController::class)->group(function () {
+    Route::post('/block/{id}','block');
+    Route::post('/unblock/{id}','unblock');
+    Route::post('/send/{id}','send');
+    Route::get('/','index');
+    Route::get('/{id}','message');
+
+
+});
+
+
+Route::get('/user_show/{id}', [UserShowController::class, 'index']);          // ارسال کد تایید
+Route::get('/user_show/rate/{id}', [UserShowController::class, 'rate']); // بررسی وجود کاربر
+Route::get('/ads/comments/user_show/{id}', [UserShowController::class, 'user_Comments']);              // ورود
+Route::get('/user_show/ads/{id}', [UserShowController::class, 'user_ads']);
 
 Route::middleware('optional.auth')->group(function () {
 Route::get('/getCountries', [CountryController::class, 'getCountries']);
@@ -65,9 +79,10 @@ Route::get('/currency', [AdsController::class, 'currency']);
 Route::get('/getCategory', [\App\Http\Controllers\Api\CategoryController::class, 'index']);
 Route::get('/getAllCategory', [\App\Http\Controllers\Api\ads\Housing\StoreHousingController::class, 'index2']);
 Route::prefix('auth')->group(function () {
-    Route::post('/send-otp', [AuthController::class, 'sendOtp']);          // ارسال کد تایید
+    Route::post('/send-otp', [AuthController::class, 'sendOtp']);
     Route::post('/check-user-exists', [AuthController::class, 'checkUserExists']); // بررسی وجود کاربر
-    Route::post('/login', [AuthController::class, 'loginOrRegister']);              // ورود
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register']);
     Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']); // خروج
     Route::post('reset', [AuthController::class, 'resetPasswordWithOtp']);
 });

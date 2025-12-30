@@ -1,13 +1,21 @@
 <?php
 
+use App\Http\Controllers\admin\AdApprovalController;
+use App\Http\Controllers\admin\AdminAdController;
 use App\Http\Controllers\admin\AdminAdsController;
 use App\Http\Controllers\admin\AdminCategory;
+use App\Http\Controllers\admin\AdminCategoryController;
+use App\Http\Controllers\admin\AdminCityController;
 use App\Http\Controllers\admin\AdminCommentController;
+use App\Http\Controllers\admin\AdminCountryController;
+use App\Http\Controllers\admin\AdminTicketController;
 use App\Http\Controllers\admin\ads\AdsController;
 use App\Http\Controllers\admin\business\BusinessController;
 use App\Http\Controllers\admin\DashboardController;
 use App\Http\Controllers\admin\digital\mobile\DigitalMobileController;
 use App\Http\Controllers\admin\housemate\housemateController;
+use App\Http\Controllers\admin\info\DigigtlBrandController;
+use App\Http\Controllers\admin\info\VehicleBrandController;
 use App\Http\Controllers\admin\kitchen\KitchenController;
 use App\Http\Controllers\admin\personal\PersonalController;
 use App\Http\Controllers\admin\real_astate\RealEstateController;
@@ -37,100 +45,46 @@ Route::get('/optimize', function () {
 });
 Route::get('/dashboard', [DashboardController::class, 'showDashboard'])->name('dashboard');
 
-Route::prefix('ads')->controller(AdminAdsController::class)->name('ads.')->group(function () {
-    Route::get('/','index')->name('index');
-    Route::get('/show/{id}','show')->name('show');
 
+
+Route::get('/admin/ads/pending', [AdApprovalController::class, 'index'])->name('admin.ads.pending');
+Route::get('/admin/ads/{ad}', [AdminAdController::class, 'show'])->name('admin.ads.show');
+Route::post('/ads/{ad}/approve', [AdApprovalController::class, 'approve'])->name('admin.ads.approve');
+Route::post('/ads/{ad}/reject', [AdApprovalController::class, 'reject'])->name('admin.ads.reject');
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/tickets', [AdminTicketController::class, 'index'])->name('tickets.index');
+    Route::get('/tickets/{id}', [AdminTicketController::class, 'show'])->name('tickets.show');
+    Route::post('/tickets/{id}/reply', [AdminTicketController::class, 'reply'])->name('tickets.reply');
 });
+Route::resource('countries', AdminCountryController::class);
 
+Route::get('countries/{country}/cities', [AdminCityController::class, 'show'])->name('cities.show');
+Route::post('countries/{country}/cities', [AdminCityController::class, 'store'])->name('cities.store');
+Route::put('cities/{city}', [AdminCityController::class, 'update'])->name('cities.update');
+Route::delete('cities/{city}', [AdminCityController::class, 'destroy'])->name('cities.destroy');
+Route::get('categories', [AdminCategoryController::class, 'index'])->name('categories.index');
+Route::get('categories/{category}', [AdminCategoryController::class, 'show'])->name('categories.show');
 
-Route::prefix('comments')->name('comments.')->group(function () {
-    Route::get('/', [AdminCommentController::class, 'comment'])->name('index');
-    Route::patch('{comment}/approve', [AdminCommentController::class, 'approve'])->name('approve');
-    Route::patch('{comment}/reject', [AdminCommentController::class, 'reject'])->name('reject');
-    Route::delete('{comment}', [AdminCommentController::class, 'destroy'])->name('destroy');
+Route::post('categories/{category}/children', [AdminCategoryController::class, 'storeChild'])
+    ->name('categories.children.store');
+
+Route::put('categories/{category}', [AdminCategoryController::class, 'update'])
+    ->name('categories.update');
+
+Route::delete('categories/{category}', [AdminCategoryController::class, 'destroy'])
+    ->name('categories.destroy');
+Route::get('admin/info', [\App\Http\Controllers\admin\InfoController::class, 'index'])
+    ->name('info');
+Route::resource('DigitalBrands', DigigtlBrandController::class);
+Route::prefix('DigitalBrands/{brand}')->group(function () {
+    Route::get('models', [DigigtlBrandController::class, 'models'])->name('DigitalBrands.models.index');
+    Route::post('models', [DigigtlBrandController::class, 'store_model'])->name('DigitalBrands.models.store');
+    Route::delete('models/{model}', [DigigtlBrandController::class, 'destroy_model'])->name('DigitalBrands.models.destroy');
 });
-
-// دسته‌بندی‌ها
-Route::get('/category', [AdminCategory::class, 'category'])->name('category');
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-Route::prefix('ads')->controller(AdsController::class)->name('ads.')->group(function () {
-    Route::get('/', 'index')->name('index');
-});
-
-
-Route::prefix('digital')->controller(DigitalMobileController::class)->name('digital.')->group(function () {
-    Route::get('/', 'index')->name('index');
-    Route::get('/{id}', 'show')->name('show');
-    Route::patch('/ads/{id}/status', 'updateStatus')->name('ads.updateStatus');
-    Route::delete('/{id}', 'destroy')->name('destroy');
-});
-
-
-Route::prefix('vehicle')->controller(VehicleController::class)->name('vehicle.')->group(function () {
-    Route::get('/', 'index')->name('index');
-    Route::get('/{id}', 'show')->name('show');
-    Route::patch('/ads/{id}/status', 'updateStatus')->name('ads.updateStatus');
-    Route::delete('/{id}', 'destroy')->name('destroy');
-});
-
-Route::prefix('kitchen')->controller(KitchenController::class)->name('kitchen.')->group(function () {
-    Route::get('/', 'index')->name('index');
-    Route::get('/{id}', 'show')->name('show');
-    Route::patch('/ads/{id}/status', 'updateStatus')->name('ads.updateStatus');
-    Route::delete('/{id}', 'destroy')->name('destroy');
-});
-Route::prefix('service')->controller(ServiceController::class)->name('service.')->group(function () {
-    Route::get('/', 'index')->name('index');
-    Route::get('/{id}', 'show')->name('show');
-    Route::patch('/ads/{id}/status', 'updateStatus')->name('ads.updateStatus');
-    Route::delete('/{id}', 'destroy')->name('destroy');
-});
-Route::prefix('personal')->controller(PersonalController::class)->name('personal.')->group(function () {
-    Route::get('/', 'index')->name('index');
-    Route::get('/{id}', 'show')->name('show');
-    Route::patch('/ads/{id}/status', 'updateStatus')->name('ads.updateStatus');
-    Route::delete('/{id}', 'destroy')->name('destroy');
-});
-Route::prefix('ticket')->controller(TicketController::class)->name('ticket.')->group(function () {
-    Route::get('/', 'index')->name('index');
-    Route::get('/{id}', 'show')->name('show');
-    Route::patch('/ads/{id}/status', 'updateStatus')->name('ads.updateStatus');
-    Route::delete('/{id}', 'destroy')->name('destroy');
-});
-
-Route::prefix('recuitment')->controller(RecuitmentController::class)->name('recuitment.')->group(function () {
-    Route::get('/', 'index')->name('index');
-    Route::get('/{id}', 'show')->name('show');
-    Route::patch('/ads/{id}/status', 'updateStatus')->name('ads.updateStatus');
-    Route::delete('/{id}', 'destroy')->name('destroy');
-});
-Route::prefix('housemate')->controller(housemateController::class)->name('housemate.')->group(function () {
-    Route::get('/', 'index')->name('index');
-    Route::get('/{id}', 'show')->name('show');
-    Route::patch('/ads/{id}/status', 'updateStatus')->name('ads.updateStatus');
-    Route::delete('/{id}', 'destroy')->name('destroy');
-
-});
-Route::prefix('user')->controller(UserController::class)->name('user.')->group(function () {
-    Route::get('/', 'index')->name('index');
-    Route::get('/{id}', 'show')->name('show');
-    Route::get('/showAd/{id}','showAd')->name('showAd');
-    Route::delete('/{id}', 'destroy')->name('destroy');
-
-});
-Route::prefix('realEstate')->controller(RealEstateController::class)->name('realEstate.')->group(function () {
-    Route::get('/', 'index')->name('index');
-    Route::get('/{id}', 'show')->name('show');
-    Route::patch('/ads/{id}/status', 'updateStatus')->name('ads.updateStatus');
-    Route::delete('/{id}', 'destroy')->name('destroy');
-});
-Route::prefix('business')->controller(BusinessController::class)->name('business.')->group(function () {
-    Route::get('/', 'index')->name('index');
-    Route::get('/{id}', 'show')->name('show');
-    Route::patch('/ads/{id}/status', 'updateStatus')->name('ads.updateStatus');
-    Route::delete('/{id}', 'destroy')->name('destroy');
+Route::resource('KitchenBrand', \App\Http\Controllers\admin\info\KitchenBrandController::class);
+Route::resource('VehicleBrand', \App\Http\Controllers\admin\info\VehicleBrandController::class);
+Route::prefix('VehicleBrand/{brand}')->group(function () {
+    Route::get('models', [VehicleBrandController::class, 'models'])->name('VehicleBrand.models.index');
+    Route::post('models', [VehicleBrandController::class, 'store_model'])->name('VehicleBrand.models.store');
+    Route::delete('models/{model}', [VehicleBrandController::class, 'destroy_model'])->name('VehicleBrand.models.destroy');
 });

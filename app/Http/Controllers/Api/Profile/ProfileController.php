@@ -30,6 +30,7 @@ class ProfileController extends Controller
             'first_name' => $user->first_name,
             'last_name' => $user->last_name,
             'mobile' => $user->mobile,
+            'bio' => $user->bio,
             'national_code' => $user->national_code,
             'identity_document' => $user->identity_document ? url('public/'.$user->identity_document) : null,
             'language' => $user->language->title ?? null,
@@ -48,6 +49,7 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
+            'bio' => 'nullable|string',
             'mobile' => 'nullable|string|unique:users,mobile,' . $user->id,
             'national_code' => 'nullable|string|max:10',
             'language_id' => 'nullable|exists:languages,id',

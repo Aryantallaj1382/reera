@@ -25,6 +25,9 @@ class Ad extends Model
 
 
     protected $guarded = [];
+    protected $casts = [
+        'expiration_date' => 'timestamp'
+    ];
 
     public function getCustomInfoAttribute()
     {
@@ -104,8 +107,8 @@ class Ad extends Model
                 'value' => $this->housemate->area,
                 'type' => $this->root_category_slug,
                 'price' => $this->housemate->price,
-                'currency' => $this->housemate->currency->title,
-                'code' => $this->housemate->currency->code,
+                'currency' => $this?->housemate?->currency?->title,
+                'code' => $this?->housemate?->currency?->code,
             ];
         }
         if ($this->ticket) {
@@ -114,8 +117,8 @@ class Ad extends Model
                 'value' => $this->ticket->ticketType?->name,
                 'type' => $this->root_category_slug,
                 'price' => $this->ticket->price,
-                'currency' => $this->ticket->currency->title,
-                'code' => $this->ticket->currency->code,
+                'currency' => $this?->ticket?->currency?->title,
+                'code' => $this?->ticket?->currency?->code,
             ];
         }
         if ($this->personalAd) {

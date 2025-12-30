@@ -18,7 +18,7 @@ class UserShowController extends Controller
             'duration'=> $user->membership_duration,
             'ratings'=> $user->ratings_summary,
             'is_iran'=> $user->is_iran,
-            'nationality'=> $user->nationality->title,
+            'nationality'=> $user?->nationality?->title,
         ]);
 
 
@@ -65,16 +65,30 @@ class UserShowController extends Controller
             ->with(['user', 'parent']) // برای نمایش نویسنده کامنت و ریپلای‌ها
             ->latest()
             ->paginate(10);
-        $comments->getCollection()->transform(function ($item, $key) use ($user)  {
-            return [
-                'id' => $item->id,
-                'rate'  => $item->average_rating,
-                'body'  => $item->body,
-                'created_at'  => $item->created_at,
-                'user_name'  => $item->user->first_name . ' ' . $item->user->last_name,
-                'profile'  => $item->profile,
-                'is_like' =>$item->is_liked,
 
+        $comments->getCollection()->transform(function ($comment) {
+            return [
+                'id' => $comment->id,
+                'body' => $comment->body,
+                'user' => [
+                    'name' => $comment->user->name,
+                    'profile' => $comment->user->profile ? asset($comment->user->profile) : asset('default-avatar.png'),
+                ],
+                'created_at' => $comment->created_at->diffForHumans(), // مثلاً "2 ساعت پیش"
+                'average_rating' => $comment->average_rating,
+                'likes_count' => $comment->likes_count,
+                'is_liked' => $comment->likes->isNotEmpty(), // آیا کاربر فعلی لایک کرده
+                'replies' => $comment->replies->map(function ($reply) {
+                    return [
+                        'id' => $reply->id,
+                        'body' => $reply->body,
+                        'user' => [
+                            'name' => $reply->user->name,
+                            'profile' => $reply->user->profile ? asset($reply->user->profile) : asset('default-avatar.png'),
+                        ],
+                        'created_at' => $reply->created_at->diffForHumans(),
+                    ];
+                }),
             ];
         });
         return api_response($comments);

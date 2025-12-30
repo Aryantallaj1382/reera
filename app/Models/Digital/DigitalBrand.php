@@ -10,11 +10,11 @@ class DigitalBrand extends Model
 
     public function models()
     {
-        return $this->hasMany(DigitalModel::class, 'digital_brand_id');
+        return $this->hasMany(DigitalModel::class, 'brand_id');
     }
 
     public function digitalAds()
     {
-        return $this->hasMany(DigitalAd::class, 'digital_brand_id');
+        return $this->hasMany(DigitalAd::class, 'brand_id');
     }
 }

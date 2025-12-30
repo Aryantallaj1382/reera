@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api\Auth;
 
 
 use App\Http\Controllers\Controller;
+use App\Mail\OtpMail;
 use App\Models\TempUser;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use IPPanel\Client;
 use Throwable;
@@ -17,31 +20,40 @@ class AuthController extends Controller
     public function sendOtp(Request $request)
     {
         $data = $request->validate([
-            'mobile' => 'required',
+            'user' => 'required',
 
         ],[], [
-            'mobile' => 'موبایل ',
+            'user' => 'ایمیل  یا موبایل',
         ]);
 
-        $user = User::where('mobile', $data['mobile'])->first();
+        if (empty($data['mobile']) && empty($data['email']) && empty($data['user'])) {
+            return response()->json([
+                'message' => 'حداقل یکی از فیلدهای شماره موبایل یا ایمیل باید پر شود'
+            ], 400);
+        }
+
+        $identifier = $data['user'];
+        $isEmail = Str::contains($identifier, '@');
+
+        $user = User::where('email', $identifier)->orWhere('mobile', $identifier)->first();
+
         if (blank($user)) {
             $user = TempUser::firstOrCreate([
-                'mobile' => $data['mobile'],
+                $isEmail ? 'email' : 'mobile' => $identifier,
             ], [
                 'sms_sent_tries' => 0,
                 'sms_sent_code' => null,
             ]);
         }
-
         $seconds = optional($user->sms_sent_date)->diffInSeconds(now());
         $remaining = round(120 - $seconds);
-//        if ($seconds && $seconds < 120) {
-//            $remaining = round(120 - $seconds); // گرد کردن به عدد صحیح
-//            return api_response([
-//                'remain' => $remaining],
-//                "لطفاً پس از گذشت " . $remaining . " ثانیه دوباره تلاش کنید."
-//                , 429);
-//        }
+        if ($seconds && $seconds < 120) {
+            $remaining = round(120 - $seconds); // گرد کردن به عدد صحیح
+            return api_response([
+                'remain' => $remaining],
+                "لطفاً پس از گذشت " . $remaining . " ثانیه دوباره تلاش کنید."
+                , 429);
+        }
 
         $code = random_int(100000, 999999);
 
@@ -58,16 +70,21 @@ class AuthController extends Controller
 
 
         try {
-            if (!empty($data['mobile'])) {
+
+            if (!empty($data['user']) && !$isEmail) {
                 (new Client(config('app.sms_panel_apikey')))
                     ->sendPattern(
-                        'i5ptms6ccqcs3e5',
+                        '7ixyfihyui5usby',
                         '3000505',
-                        $data['mobile'],
+                        $data['user'],
                         ['code' => $code]
                     );
                 $responseMessages['message'] = 'کد تایید به شماره موبایل ارسال شد.';
+            }
 
+            if (!empty($data['user']) && $isEmail) {
+                Mail::to($data['user'])->send(new OtpMail($user));
+                $responseMessages['user'] = 'کد تایید به ایمیل ارسال شد.';
             }
 
 
@@ -88,10 +105,10 @@ class AuthController extends Controller
     public function checkUserExists(Request $request)
     {
         $request->validate([
-            'mobile' => 'required|string',
+            'email' => 'required|string',
         ]);
 
-        $user = User::where('mobile', $request->input('mobile'))
+        $user = User::where('email', $request->input('email'))
             ->first();
         if ($user) {
             return api_response([
@@ -111,44 +128,78 @@ class AuthController extends Controller
 
         return api_response([],'با موفقیت از حساب خود خارج شدید ');
     }
-    public function loginOrRegister(Request $request)
+
+    public function register(Request $request)
     {
         $request->validate([
-            'mobile' => 'required|numeric',
+            'user' => 'required',
             'otp'    => 'required|string',
         ]);
 
-        $user = User::where('mobile', $request->mobile)->first();
-
+        $user = User::where('email', $request->user)->orWhere('mobile',$request->user)->first();
         if ($user) {
-            if ($user->sms_sent_code !== $request->otp) {
+            return api_response([],'کارببر قبلا ثبت نام کرده است');
+        }
+
+
+
+        $tempUser = TempUser::where('email', $request->user)->orWhere('mobile',$request->user)->first();
+        $identifier = $request->user;
+        $isEmail = Str::contains($identifier, '@');
+        if (!$tempUser) {
+            return response()->json(['message' => 'کد تأیید پیدا نشد'], 422);
+        }
+
+        if ($tempUser->sms_sent_code !== $request->otp) {
+            return response()->json(['message' => 'کد وارد شده اشتباه است'], 422);
+        }
+
+        $sentAt = \Carbon\Carbon::parse($tempUser->sms_sent_date);
+        if ($sentAt->diffInMinutes(now()) > 2) {
+            return response()->json(['message' => 'کد منقضی شده است'], 422);
+        }
+
+        $user = User::create([
+            $isEmail ? 'email' : 'mobile' => $identifier,
+        ]);
+
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return api_response([
+            'token' => $token,
+            'user_id' => $user->id,
+        ], $user->wasRecentlyCreated ? 'ثبت نام با موفقیت انجام شد' : 'ورود موفقیت‌آمیز');
+    }
+
+
+    public function login(Request $request)
+    {
+        $request->validate([
+            'user' => 'required',
+            'otp'    => 'nullable|string',
+            'password' => 'nullable|string'
+        ]);
+
+        $user = User::where('email', $request->user)->orWhere('mobile',$request->user)->first();
+        if (!$user) {
+            return api_response([],'کاربر ثبت نام نکرده',422);
+        }
+        if (empty($request->otp) && empty($request->password)) {
+            return api_response([],'حداقل رمز یا کد پیامکی را وارد کنید');
+        }
+
+
+        if (!empty($request->otp)&& $user->sms_sent_code !== $request->otp) {
                 return response()->json(['message' => 'کد وارد شده اشتباه است'], 422);
-            }
-
-            $sentAt = \Carbon\Carbon::parse($user->sms_sent_date);
-            if ($sentAt->diffInMinutes(now()) > 2) {
+        }
+        $sentAt = \Carbon\Carbon::parse($user->sms_sent_date);
+        if (!empty($request->otp)&& $sentAt->diffInMinutes(now()) > 2) {
                 return response()->json(['message' => 'کد منقضی شده است'], 422);
-            }
-        } else {
-            $tempUser = TempUser::where('mobile', $request->mobile)->first();
+        }
 
-            if (!$tempUser) {
-                return response()->json(['message' => 'کد تأیید پیدا نشد'], 422);
-            }
-
-            if ($tempUser->sms_sent_code !== $request->otp) {
-                return response()->json(['message' => 'کد وارد شده اشتباه است'], 422);
-            }
-
-            $sentAt = \Carbon\Carbon::parse($tempUser->sms_sent_date);
-            if ($sentAt->diffInMinutes(now()) > 2) {
-                return response()->json(['message' => 'کد منقضی شده است'], 422);
-            }
-
-            // ایجاد کاربر جدید
-            $user = User::create([
-                'mobile' => $request->mobile,
-            ]);
+        if (!empty($request->password)&& !Hash::check($request->password, $user->password)) {
+            return api_response([], 'رمز عبور اشتباه است.', 401);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
